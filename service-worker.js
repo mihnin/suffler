@@ -1,6 +1,6 @@
 /* Суфлёр — service worker: офлайн-кэш приложения.
    Сценарии пользователя здесь не обрабатываются и никуда не отправляются. */
-const CACHE = 'suffler-v4';
+const CACHE = 'suffler-v5';
 const ASSETS = [
   './',
   './index.html',

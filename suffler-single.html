@@ -95,7 +95,7 @@ button { touch-action: manipulation; cursor: pointer; }
 .lib-foot { padding: 10px 14px calc(10px + var(--sab)); font-size: 12px; color: var(--ui-dim); border-top: 1px solid var(--ui-line); }
 .lib-scrim { display: none; }
 
-.editor-main { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 12px calc(20px + var(--sar)) 0 20px; }
+.editor-main { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-y: auto; padding: 12px calc(20px + var(--sar)) 0 20px; }
 .script-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .script-name {
   appearance: none; border: 0; background: transparent; text-align: left;
@@ -119,7 +119,7 @@ button { touch-action: manipulation; cursor: pointer; }
 }
 
 #editor {
-  flex: 1; min-height: 0; width: 100%; resize: none;
+  flex: 1; min-height: 260px; width: 100%; resize: none;
   background: var(--ui-panel); border: 1px solid var(--ui-line); border-radius: 14px;
   padding: 18px 20px; font-size: 19px; line-height: 1.6; color: var(--ui-text);
   outline: none; -webkit-overflow-scrolling: touch;
