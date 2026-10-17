@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Суфлёр</title>
+<meta name="description" content="Автономный телесуфлёр для съёмки видео">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Суфлёр">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ SCRIPT (редактор) ============ -->
+<section id="editorView" class="view active" aria-label="Сценарий">
+  <header class="topnav">
+    <button id="btnLibrary" class="icon-btn only-narrow" aria-label="Список сценариев"><span data-icon="list"></span></button>
+    <div class="brand">Суфлёр</div>
+    <nav class="tabs" aria-label="Разделы">
+      <button class="tab active" data-go="script">Сценарий</button>
+      <button class="tab" data-go="prompter">Суфлёр</button>
+      <button class="tab" data-go="settings">Настройки</button>
+    </nav>
+  </header>
+
+  <div class="editor-body">
+    <aside id="library" class="library">
+      <div class="lib-head">
+        <span>Мои сценарии</span>
+        <button id="btnNew" class="btn small primary">+ Новый</button>
+      </div>
+      <ul id="scriptList" class="script-list"></ul>
+      <div class="lib-foot" id="libFoot"></div>
+    </aside>
+    <div id="libScrim" class="lib-scrim"></div>
+
+    <main class="editor-main">
+      <div class="script-head">
+        <button id="scriptName" class="script-name" title="Переименовать"></button>
+        <div class="head-actions">
+          <button id="btnRename" class="btn ghost">Переименовать</button>
+          <button id="btnDuplicate" class="btn ghost">Дублировать</button>
+          <button id="btnDelete" class="btn ghost danger">Удалить</button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button id="btnPaste" class="btn">Вставить из буфера</button>
+        <button id="btnClear" class="btn">Очистить</button>
+        <button id="btnImport" class="btn">Импорт TXT</button>
+        <button id="btnExport" class="btn">Экспорт TXT</button>
+        <input id="fileInput" type="file" accept=".txt,.text,.md,text/plain" hidden>
+        <span id="saveState" class="save-state">Сохранено</span>
+      </div>
+
+      <div class="cue-row" id="cueRow">
+        <span class="cue-row-label">Вставить маркер:</span>
+      </div>
+
+      <textarea id="editor" lang="ru" spellcheck="true" autocapitalize="sentences" placeholder="Вставьте или наберите текст сценария.
+
+Пустая строка — новый абзац.
+Режиссёрские пометки пишите в квадратных скобках: [ПАУЗА], [УЛЫБКА] — они видны в суфлёре, но не считаются словами."></textarea>
+
+      <footer class="editor-foot">
+        <div class="stats">
+          <span id="statWords">0 слов</span>
+          <span class="sep">·</span>
+          <span>Ориентировочная длительность: <b id="statDuration">0:00</b></span>
+          <label class="wpm">при <input id="wpmInput" type="number" inputmode="numeric" min="40" max="300" step="5"> слов/мин</label>
+        </div>
+        <div class="start-actions">
+          <button id="btnResume" class="btn big hidden">Продолжить</button>
+          <button id="btnStart" class="btn big primary"><span data-icon="play"></span> Начать</button>
+        </div>
+      </footer>
+    </main>
+  </div>
+</section>
+
+<!-- ============ PROMPTER ============ -->
+<section id="prompterView" class="view" aria-label="Суфлёр">
+  <div id="stage">
+    <div id="mirror">
+      <div id="scroller"><div id="col"></div></div>
+      <div id="dimTop" class="dim"></div>
+      <div id="dimBottom" class="dim"></div>
+      <div id="markerL" class="line-marker"></div>
+      <div id="markerR" class="line-marker"></div>
+      <div id="countdown" aria-live="assertive"></div>
+      <div id="hud"></div>
+      <div id="heard"></div>
+      <div id="endNote">Конец сценария</div>
+    </div>
+  </div>
+
+  <div id="pTop" class="p-bar p-top">
+    <button class="cbtn" data-act="exit"><span data-icon="close"></span><small>Выход</small></button>
+    <div class="p-title">
+      <div id="pTitle"></div>
+      <div class="p-meta"><span id="pStatus"></span> <span id="voiceInd" class="voice-ind"></span></div>
+      <div class="p-progress"><div id="pProgress"></div></div>
+    </div>
+    <button class="cbtn" data-act="hud" id="btnHud"><span data-icon="timer"></span><small>Время</small></button>
+    <button class="cbtn" data-act="mirror" id="btnMirror"><span data-icon="mirror"></span><small>Зеркало</small></button>
+    <button class="cbtn" data-act="fullscreen" id="btnFull"><span data-icon="full"></span><small>Экран</small></button>
+    <button class="cbtn" data-act="settings"><span data-icon="sliders"></span><small>Настройки</small></button>
+  </div>
+
+  <div id="pControls" class="p-bar p-bottom">
+    <div class="cgroup">
+      <button class="cbtn" data-act="restart"><span data-icon="restart"></span><small>Сначала</small></button>
+      <button class="cbtn" data-act="stop"><span data-icon="stop"></span><small>Стоп</small></button>
+    </div>
+    <div class="cgroup">
+      <button class="cbtn" data-act="back5s"><span data-icon="back"></span><small>5 сек</small></button>
+      <button class="cbtn txt" data-act="back3"><b>−3</b><small>строки</small></button>
+      <button class="cbtn txt" data-act="back1"><b>−1</b><small>строка</small></button>
+      <button class="cbtn play" data-act="toggle" id="btnPlay"><span data-icon="play"></span><small>Старт</small></button>
+      <button class="cbtn txt" data-act="fwd1"><b>+1</b><small>строка</small></button>
+    </div>
+    <div class="cgroup speed">
+      <button class="cbtn" data-act="slower"><span data-icon="minus"></span><small>Медленнее</small></button>
+      <div class="speed-box">
+        <input id="speedSlider" type="range" min="0" max="100" step="0.5" aria-label="Скорость">
+        <div class="speed-label">Скорость <b id="speedVal"></b></div>
+      </div>
+      <button class="cbtn" data-act="faster"><span data-icon="plus"></span><small>Быстрее</small></button>
+    </div>
+  </div>
+
+  <aside id="drawer" class="drawer" aria-label="Настройки">
+    <div class="drawer-head">
+      <b>Настройки</b>
+      <button class="icon-btn" id="drawerClose" aria-label="Закрыть"><span data-icon="close"></span></button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+  </aside>
+</section>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <h3 id="modalTitle"></h3>
+    <div id="modalBody"></div>
+    <input id="modalInput" type="text" class="hidden">
+    <div class="modal-actions">
+      <button id="modalCancel" class="btn">Отмена</button>
+      <button id="modalOk" class="btn primary">OK</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

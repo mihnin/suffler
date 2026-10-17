@@ -1,0 +1,2507 @@
+<meta charset="utf-8">
+<title>Суфлёр</title>
+<meta name="theme-color" content="#000000">
+<style>
+/* ===== Суфлёр — стили ===== */
+:root {
+  --ui-bg: #0e0e10;
+  --ui-panel: #18181b;
+  --ui-panel-2: #222227;
+  --ui-line: #2e2e35;
+  --ui-text: #ececf0;
+  --ui-dim: #9a9aa3;
+  --accent: #0a84ff;
+  --danger: #ff453a;
+  --ok: #30d158;
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  color-scheme: dark;
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; height: 100%;
+  background: #000; color: var(--ui-text);
+  font-family: var(--font-ui);
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+body { overflow: hidden; position: fixed; inset: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { touch-action: manipulation; cursor: pointer; }
+.hidden { display: none !important; }
+
+/* ---------- views ---------- */
+.view { position: fixed; inset: 0; display: none; }
+.view.active { display: flex; }
+
+/* ---------- common buttons ---------- */
+.btn {
+  appearance: none; border: 1px solid var(--ui-line);
+  background: var(--ui-panel-2); color: var(--ui-text);
+  border-radius: 12px; padding: 0 16px; min-height: 44px;
+  font-size: 16px; font-weight: 500; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn:active { filter: brightness(1.3); }
+.btn.small { min-height: 36px; padding: 0 12px; font-size: 15px; }
+.btn.big { min-height: 60px; padding: 0 28px; font-size: 20px; font-weight: 600; border-radius: 16px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.ghost { background: transparent; }
+.btn.danger { color: var(--danger); }
+.btn .ico, .cbtn .ico { width: 1.2em; height: 1.2em; }
+.icon-btn {
+  appearance: none; border: 0; background: transparent; color: var(--ui-text);
+  width: 48px; height: 48px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
+}
+.icon-btn .ico { width: 26px; height: 26px; }
+.ico { display: inline-block; vertical-align: middle; }
+
+/* ================= EDITOR ================= */
+#editorView { flex-direction: column; background: var(--ui-bg); }
+.topnav {
+  display: flex; align-items: center; gap: 12px;
+  padding: calc(8px + var(--sat)) calc(16px + var(--sar)) 8px calc(16px + var(--sal));
+  border-bottom: 1px solid var(--ui-line); background: var(--ui-bg);
+}
+.brand { font-weight: 700; font-size: 20px; letter-spacing: .02em; margin-right: auto; }
+.tabs { display: flex; background: var(--ui-panel); border-radius: 12px; padding: 4px; gap: 4px; }
+.tab {
+  appearance: none; border: 0; background: transparent; color: var(--ui-dim);
+  padding: 0 18px; min-height: 40px; border-radius: 9px; font-size: 16px; font-weight: 600;
+}
+.tab.active { background: var(--ui-panel-2); color: var(--ui-text); }
+
+.editor-body { flex: 1; display: flex; min-height: 0; position: relative; }
+
+.library {
+  width: 300px; flex: none; display: flex; flex-direction: column;
+  border-right: 1px solid var(--ui-line); background: var(--ui-bg);
+  padding-left: var(--sal);
+}
+.lib-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 14px 10px; color: var(--ui-dim); font-size: 14px; text-transform: uppercase; letter-spacing: .06em; }
+.script-list { list-style: none; margin: 0; padding: 0 8px 8px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+.script-list li {
+  padding: 12px 12px; border-radius: 12px; margin-bottom: 4px; cursor: pointer;
+  border: 1px solid transparent;
+}
+.script-list li.active { background: var(--ui-panel-2); border-color: var(--ui-line); }
+.script-list .nm { font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.script-list .mt { font-size: 13px; color: var(--ui-dim); margin-top: 3px; }
+.lib-foot { padding: 10px 14px calc(10px + var(--sab)); font-size: 12px; color: var(--ui-dim); border-top: 1px solid var(--ui-line); }
+.lib-scrim { display: none; }
+
+.editor-main { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 12px calc(20px + var(--sar)) 0 20px; }
+.script-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.script-name {
+  appearance: none; border: 0; background: transparent; text-align: left;
+  font-size: 24px; font-weight: 700; padding: 6px 0; margin-right: auto; max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.script-name::after { content: " ✎"; color: var(--ui-dim); font-weight: 400; font-size: 18px; }
+.head-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+.save-state { margin-left: auto; color: var(--ui-dim); font-size: 14px; }
+.save-state.saving { color: #ffd60a; }
+.save-state.error { color: var(--danger); }
+
+.cue-row { display: flex; gap: 6px; align-items: center; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.cue-row::-webkit-scrollbar { display: none; }
+.cue-row-label { color: var(--ui-dim); font-size: 14px; white-space: nowrap; }
+.chip {
+  appearance: none; border: 1px solid #2a4a6e; background: #10243a; color: #8cc4ff;
+  border-radius: 999px; padding: 0 12px; min-height: 34px; font-size: 13px; font-weight: 700;
+  letter-spacing: .04em; white-space: nowrap;
+}
+
+#editor {
+  flex: 1; min-height: 0; width: 100%; resize: none;
+  background: var(--ui-panel); border: 1px solid var(--ui-line); border-radius: 14px;
+  padding: 18px 20px; font-size: 19px; line-height: 1.6; color: var(--ui-text);
+  outline: none; -webkit-overflow-scrolling: touch;
+}
+#editor:focus { border-color: #3a3a44; }
+
+.editor-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  padding: 12px 0 calc(12px + var(--sab));
+}
+.stats { color: var(--ui-dim); font-size: 15px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.stats b { color: var(--ui-text); font-size: 17px; }
+.wpm input { width: 70px; min-height: 36px; background: var(--ui-panel-2); border: 1px solid var(--ui-line); border-radius: 8px; padding: 0 8px; text-align: center; font-size: 16px; }
+.start-actions { display: flex; gap: 10px; }
+
+/* ================= PROMPTER ================= */
+#prompterView {
+  --bg: #000; --fg: #fff; --bg-rgb: 0,0,0; --cue: #59a8ff; --mark: #ff9f0a;
+  background: var(--bg);
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+#prompterView.theme-light { --bg: #fff; --fg: #000; --bg-rgb: 255,255,255; --cue: #0055c4; --mark: #d14b00; }
+#prompterView.theme-gray  { --bg: #000; --fg: #c9c9c9; --bg-rgb: 0,0,0; --cue: #4f8fd6; --mark: #c27a00; }
+#prompterView.theme-amber { --bg: #000; --fg: #ffd65a; --bg-rgb: 0,0,0; --cue: #59a8ff; --mark: #ff6b3d; }
+
+#stage {
+  position: absolute; inset: 0; overflow: hidden; touch-action: none;
+  background: var(--bg);
+}
+#mirror { position: absolute; inset: 0; transform-origin: 50% 50%; }
+#scroller { position: absolute; top: 0; left: 0; right: 0; will-change: transform; }
+#col {
+  position: relative; margin: 0 auto;
+  width: var(--colw, 50%); max-width: calc(100% - 48px);
+  font-size: var(--fs, 64px); line-height: var(--lh, 1.5); letter-spacing: var(--ls, 0);
+  font-family: var(--font, var(--font-ui)); font-weight: var(--weight, 500);
+  text-align: var(--align, left); color: var(--fg); opacity: var(--bright, 1);
+  overflow-wrap: break-word; word-wrap: break-word;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+#col p { margin: 0 0 var(--ps, 0.8em) 0; }
+#col p.empty { color: #888; font-size: 0.5em; }
+#col .cue {
+  display: inline; font-size: 0.48em; line-height: 1; font-weight: 800; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--cue); border: 0.12em solid currentColor; border-radius: .45em;
+  padding: .08em .45em; vertical-align: 0.3em; white-space: nowrap; font-style: normal;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+#prompterView.no-cues #col .cue { display: none; }
+#prompterView.vf-highlight #col .w.said { opacity: .42; }
+
+.dim { position: absolute; left: 0; right: 0; pointer-events: none; }
+#dimTop {
+  top: 0; height: var(--readY, 30%);
+  background: linear-gradient(to bottom, rgba(var(--bg-rgb), var(--dim, .7)) 0%, rgba(var(--bg-rgb), var(--dim, .7)) calc(100% - var(--feather, 30px)), rgba(var(--bg-rgb), 0) 100%);
+}
+#dimBottom {
+  top: var(--bandEnd, 60%); bottom: 0;
+  background: linear-gradient(to bottom, rgba(var(--bg-rgb), 0) 0%, rgba(var(--bg-rgb), var(--dim, .7)) var(--feather, 30px), rgba(var(--bg-rgb), var(--dim, .7)) 100%);
+}
+#prompterView.no-focus .dim { display: none; }
+.line-marker {
+  position: absolute; top: var(--markY, 30%); width: 0; height: 0; pointer-events: none;
+  border-top: 14px solid transparent; border-bottom: 14px solid transparent; margin-top: -14px; opacity: .85;
+}
+#markerL { left: var(--markL, 10%); border-left: 20px solid var(--mark); margin-left: -34px; }
+#markerR { left: var(--markR, 90%); border-right: 20px solid var(--mark); margin-left: 14px; }
+#prompterView.no-marker .line-marker { display: none; }
+
+#countdown {
+  position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+  font-size: min(42vh, 42vw); font-weight: 700; color: var(--fg); pointer-events: none;
+  background: rgba(var(--bg-rgb), .72); font-variant-numeric: tabular-nums;
+}
+#countdown.on { display: flex; }
+#hud {
+  position: absolute; top: calc(12px + var(--sat)); right: calc(16px + var(--sar));
+  font-size: 18px; font-weight: 600; color: var(--fg); opacity: .5; display: none;
+  font-variant-numeric: tabular-nums; pointer-events: none; text-align: right; line-height: 1.4;
+}
+#prompterView.show-hud #hud { display: block; }
+/* пока видна верхняя панель, там та же информация — угловой индикатор прячем */
+#prompterView:not(.controls-hidden) #hud { visibility: hidden; }
+#heard {
+  position: absolute; left: 50%; bottom: calc(16px + var(--sab)); transform: translateX(-50%);
+  max-width: 80%; font-size: 18px; color: var(--fg); opacity: .45; display: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  pointer-events: none;
+}
+#prompterView.show-heard #heard { display: block; }
+#endNote {
+  position: absolute; left: 0; right: 0; top: 50%; text-align: center; font-size: 28px; color: var(--fg); opacity: 0;
+  pointer-events: none; transition: opacity .4s;
+}
+#prompterView.ended #endNote { opacity: .6; }
+
+/* control bars */
+.p-bar {
+  position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: 10px;
+  background: rgba(16,16,18,.9); color: #f2f2f5;
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  transition: opacity .25s, transform .25s; z-index: 5;
+}
+.p-top { top: 0; padding: calc(6px + var(--sat)) calc(12px + var(--sar)) 6px calc(12px + var(--sal)); border-bottom: 1px solid rgba(255,255,255,.08); }
+.p-bottom {
+  bottom: 0; justify-content: space-between; flex-wrap: wrap;
+  padding: 8px calc(12px + var(--sar)) calc(8px + var(--sab)) calc(12px + var(--sal));
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+#prompterView.controls-hidden .p-bar { opacity: 0; pointer-events: none; }
+#prompterView.controls-hidden .p-top { transform: translateY(-20px); }
+#prompterView.controls-hidden .p-bottom { transform: translateY(20px); }
+
+.cgroup { display: flex; gap: 6px; align-items: center; }
+.cbtn {
+  appearance: none; border: 0; background: rgba(255,255,255,.08); color: #f2f2f5;
+  min-width: 68px; height: 64px; border-radius: 14px; padding: 4px 8px;
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+}
+.cbtn:active { background: rgba(255,255,255,.22); }
+.cbtn .ico { width: 26px; height: 26px; }
+.cbtn small { font-size: 12px; opacity: .75; line-height: 1; }
+.cbtn.txt b { font-size: 22px; line-height: 1; }
+.cbtn.play { min-width: 104px; background: var(--accent); }
+.cbtn.play .ico { width: 32px; height: 32px; }
+.cbtn.on { background: rgba(10,132,255,.35); box-shadow: inset 0 0 0 2px var(--accent); }
+.speed-box { width: 300px; display: flex; flex-direction: column; gap: 2px; }
+.speed-label { font-size: 13px; text-align: center; opacity: .8; }
+.speed-label b { font-size: 17px; font-variant-numeric: tabular-nums; }
+
+.p-title { flex: 1; min-width: 0; padding: 0 8px; }
+#pTitle { font-weight: 600; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.p-meta { font-size: 13px; opacity: .7; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.p-progress { height: 4px; background: rgba(255,255,255,.12); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+#pProgress { height: 100%; width: 0; background: var(--accent); }
+.voice-ind { display: inline-block; margin-left: 8px; }
+.voice-ind::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; background: #666; }
+.voice-ind.listening::before { background: var(--ok); }
+.voice-ind.speaking::before { background: var(--ok); box-shadow: 0 0 0 4px rgba(48,209,88,.3); }
+.voice-ind.error::before { background: var(--danger); }
+.voice-ind:empty { display: none; }
+
+/* range sliders (touch friendly) */
+input[type=range] {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 36px; background: transparent; margin: 0;
+  touch-action: pan-y;
+}
+input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: rgba(255,255,255,.22); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 30px; height: 30px; border-radius: 50%; background: #fff; margin-top: -12px; box-shadow: 0 1px 4px rgba(0,0,0,.5); }
+input[type=range]::-moz-range-track { height: 6px; border-radius: 3px; background: rgba(255,255,255,.22); }
+input[type=range]::-moz-range-thumb { width: 28px; height: 28px; border-radius: 50%; background: #fff; border: 0; }
+
+/* ---------- settings drawer ---------- */
+.drawer {
+  position: absolute; top: 0; right: 0; bottom: 0; width: min(440px, 100%);
+  background: rgba(20,20,23,.97); color: var(--ui-text); z-index: 10;
+  border-left: 1px solid var(--ui-line);
+  transform: translateX(105%); transition: transform .25s ease;
+  display: flex; flex-direction: column;
+  padding-right: var(--sar);
+  -webkit-user-select: none; user-select: none;
+}
+#prompterView.drawer-open .drawer { transform: none; }
+@media (min-width: 1000px) {
+  /* на широком экране текст сдвигается влево, чтобы настройки было видно вживую */
+  #prompterView.drawer-open #stage { right: min(440px, 100%); }
+  #prompterView.drawer-open .p-bar { right: min(440px, 100%); }
+}
+.drawer-head { display: flex; align-items: center; justify-content: space-between; padding: calc(8px + var(--sat)) 8px 8px 20px; border-bottom: 1px solid var(--ui-line); font-size: 19px; }
+.drawer-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 4px 20px calc(30px + var(--sab)); overscroll-behavior: contain; touch-action: pan-y; }
+.set-section { padding: 14px 0 6px; border-bottom: 1px solid var(--ui-line); }
+.set-section h4 { margin: 4px 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .07em; color: var(--ui-dim); }
+.set-row { margin: 10px 0 14px; }
+.set-label { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; margin-bottom: 4px; }
+.set-label output { color: var(--ui-dim); font-variant-numeric: tabular-nums; }
+.range-wrap { display: flex; align-items: center; gap: 8px; }
+.step {
+  appearance: none; border: 1px solid var(--ui-line); background: var(--ui-panel-2); color: var(--ui-text);
+  width: 44px; height: 40px; border-radius: 10px; font-size: 22px; line-height: 1; flex: none;
+}
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg button {
+  appearance: none; flex: 1 1 auto; border: 1px solid var(--ui-line); background: var(--ui-panel-2);
+  color: var(--ui-text); min-height: 42px; border-radius: 10px; padding: 0 10px; font-size: 14px; font-weight: 500;
+}
+.seg button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 15px; min-height: 44px; }
+.switch { position: relative; width: 56px; height: 32px; flex: none; }
+.switch input { opacity: 0; position: absolute; inset: 0; margin: 0; z-index: 1; cursor: pointer; }
+.switch span { position: absolute; inset: 0; border-radius: 16px; background: #3a3a42; transition: background .2s; }
+.switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; transition: transform .2s; }
+.switch input:checked + span { background: var(--ok); }
+.switch input:checked + span::after { transform: translateX(24px); }
+.hint { font-size: 13px; color: var(--ui-dim); line-height: 1.45; margin: 6px 0; }
+.hint.warn { color: #ffd60a; }
+.hint.err { color: #ff6961; }
+.hint.good { color: var(--ok); }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.btn-row .btn { flex: 1 1 auto; font-size: 15px; }
+.meter { position: relative; height: 14px; border-radius: 7px; background: #2a2a30; overflow: hidden; margin: 8px 0; }
+.meter-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--ok); transition: width .05s linear; }
+.meter-thr { position: absolute; top: -2px; bottom: -2px; width: 3px; background: #ffd60a; }
+.heard-box { min-height: 44px; padding: 8px 10px; background: var(--ui-panel); border-radius: 10px; font-size: 14px; color: var(--ui-text); }
+.keys-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.keys-table td { padding: 6px 0; border-bottom: 1px solid #26262c; vertical-align: middle; }
+.keys-table td:last-child { text-align: right; white-space: nowrap; }
+.kbd { display: inline-block; padding: 2px 7px; margin: 1px; border-radius: 6px; background: #2c2c33; border: 1px solid #3a3a44; font-size: 12px; font-family: ui-monospace, Menlo, monospace; }
+.keys-table .btn { min-height: 34px; font-size: 13px; padding: 0 10px; }
+.keys-table .btn.listening { background: #ffd60a; color: #000; }
+.preset-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.preset-grid .btn { justify-content: flex-start; text-align: left; white-space: normal; padding: 10px 14px; flex-direction: column; align-items: flex-start; gap: 2px; }
+.preset-grid .btn small { color: var(--ui-dim); font-weight: 400; font-size: 13px; }
+
+/* ---------- toast & modal ---------- */
+.toast {
+  position: fixed; left: 50%; bottom: calc(110px + var(--sab)); transform: translate(-50%, 20px);
+  background: #2c2c32; color: #fff; padding: 12px 16px; border-radius: 14px; font-size: 16px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.5); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+  z-index: 50; max-width: min(640px, calc(100vw - 32px)); display: flex; gap: 14px; align-items: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.toast button { appearance: none; border: 0; background: transparent; color: #64b5ff; font-weight: 700; font-size: 16px; padding: 6px 4px; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 60; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.modal-card { background: var(--ui-panel); border: 1px solid var(--ui-line); border-radius: 18px; padding: 20px; width: min(520px, 100%); box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+.modal-card h3 { margin: 0 0 10px; font-size: 20px; }
+#modalBody { font-size: 15px; line-height: 1.5; color: #cfcfd6; }
+#modalBody p { margin: 0 0 10px; }
+#modalInput { width: 100%; min-height: 48px; margin: 10px 0 0; padding: 0 12px; border-radius: 10px; border: 1px solid var(--ui-line); background: var(--ui-panel-2); font-size: 18px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+
+/* ---------- responsive ---------- */
+.only-narrow { display: none; }
+
+@media (max-width: 900px) {
+  .only-narrow { display: inline-flex; }
+  .library {
+    position: absolute; top: 0; bottom: 0; left: 0; z-index: 20; width: min(320px, 85vw);
+    transform: translateX(-102%); transition: transform .25s; box-shadow: 10px 0 30px rgba(0,0,0,.5);
+  }
+  .editor-body.lib-open .library { transform: none; }
+  .editor-body.lib-open .lib-scrim { display: block; position: absolute; inset: 0; z-index: 15; background: rgba(0,0,0,.5); }
+  .editor-main { padding-left: calc(14px + var(--sal)); padding-right: calc(14px + var(--sar)); }
+  .brand { display: none; }
+  .tabs { margin-left: auto; }
+  .tab { padding: 0 12px; }
+}
+
+/* portrait / narrow prompter controls */
+@media (max-width: 1100px) {
+  .p-bottom { justify-content: center; row-gap: 8px; }
+  .cgroup.speed { order: -1; width: 100%; justify-content: center; }
+  .speed-box { flex: 1; max-width: 520px; }
+}
+@media (max-width: 620px) {
+  .cbtn { min-width: 52px; height: 56px; padding: 4px 4px; }
+  .cbtn small { font-size: 10px; }
+  .cbtn.play { min-width: 76px; }
+  .p-top .cbtn small { display: none; }
+  .head-actions .btn, .toolbar .btn { font-size: 14px; padding: 0 10px; }
+  .btn.big { min-height: 54px; padding: 0 18px; font-size: 18px; }
+  .script-name { font-size: 20px; }
+}
+@media (pointer: fine) {
+  .script-list li:hover { background: var(--ui-panel); }
+}
+
+</style>
+<!-- ============ SCRIPT (редактор) ============ -->
+<section id="editorView" class="view active" aria-label="Сценарий">
+  <header class="topnav">
+    <button id="btnLibrary" class="icon-btn only-narrow" aria-label="Список сценариев"><span data-icon="list"></span></button>
+    <div class="brand">Суфлёр</div>
+    <nav class="tabs" aria-label="Разделы">
+      <button class="tab active" data-go="script">Сценарий</button>
+      <button class="tab" data-go="prompter">Суфлёр</button>
+      <button class="tab" data-go="settings">Настройки</button>
+    </nav>
+  </header>
+
+  <div class="editor-body">
+    <aside id="library" class="library">
+      <div class="lib-head">
+        <span>Мои сценарии</span>
+        <button id="btnNew" class="btn small primary">+ Новый</button>
+      </div>
+      <ul id="scriptList" class="script-list"></ul>
+      <div class="lib-foot" id="libFoot"></div>
+    </aside>
+    <div id="libScrim" class="lib-scrim"></div>
+
+    <main class="editor-main">
+      <div class="script-head">
+        <button id="scriptName" class="script-name" title="Переименовать"></button>
+        <div class="head-actions">
+          <button id="btnRename" class="btn ghost">Переименовать</button>
+          <button id="btnDuplicate" class="btn ghost">Дублировать</button>
+          <button id="btnDelete" class="btn ghost danger">Удалить</button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button id="btnPaste" class="btn">Вставить из буфера</button>
+        <button id="btnClear" class="btn">Очистить</button>
+        <button id="btnImport" class="btn">Импорт TXT</button>
+        <button id="btnExport" class="btn">Экспорт TXT</button>
+        <input id="fileInput" type="file" accept=".txt,.text,.md,text/plain" hidden>
+        <span id="saveState" class="save-state">Сохранено</span>
+      </div>
+
+      <div class="cue-row" id="cueRow">
+        <span class="cue-row-label">Вставить маркер:</span>
+      </div>
+
+      <textarea id="editor" lang="ru" spellcheck="true" autocapitalize="sentences" placeholder="Вставьте или наберите текст сценария.
+
+Пустая строка — новый абзац.
+Режиссёрские пометки пишите в квадратных скобках: [ПАУЗА], [УЛЫБКА] — они видны в суфлёре, но не считаются словами."></textarea>
+
+      <footer class="editor-foot">
+        <div class="stats">
+          <span id="statWords">0 слов</span>
+          <span class="sep">·</span>
+          <span>Ориентировочная длительность: <b id="statDuration">0:00</b></span>
+          <label class="wpm">при <input id="wpmInput" type="number" inputmode="numeric" min="40" max="300" step="5"> слов/мин</label>
+        </div>
+        <div class="start-actions">
+          <button id="btnResume" class="btn big hidden">Продолжить</button>
+          <button id="btnStart" class="btn big primary"><span data-icon="play"></span> Начать</button>
+        </div>
+      </footer>
+    </main>
+  </div>
+</section>
+
+<!-- ============ PROMPTER ============ -->
+<section id="prompterView" class="view" aria-label="Суфлёр">
+  <div id="stage">
+    <div id="mirror">
+      <div id="scroller"><div id="col"></div></div>
+      <div id="dimTop" class="dim"></div>
+      <div id="dimBottom" class="dim"></div>
+      <div id="markerL" class="line-marker"></div>
+      <div id="markerR" class="line-marker"></div>
+      <div id="countdown" aria-live="assertive"></div>
+      <div id="hud"></div>
+      <div id="heard"></div>
+      <div id="endNote">Конец сценария</div>
+    </div>
+  </div>
+
+  <div id="pTop" class="p-bar p-top">
+    <button class="cbtn" data-act="exit"><span data-icon="close"></span><small>Выход</small></button>
+    <div class="p-title">
+      <div id="pTitle"></div>
+      <div class="p-meta"><span id="pStatus"></span> <span id="voiceInd" class="voice-ind"></span></div>
+      <div class="p-progress"><div id="pProgress"></div></div>
+    </div>
+    <button class="cbtn" data-act="hud" id="btnHud"><span data-icon="timer"></span><small>Время</small></button>
+    <button class="cbtn" data-act="mirror" id="btnMirror"><span data-icon="mirror"></span><small>Зеркало</small></button>
+    <button class="cbtn" data-act="fullscreen" id="btnFull"><span data-icon="full"></span><small>Экран</small></button>
+    <button class="cbtn" data-act="settings"><span data-icon="sliders"></span><small>Настройки</small></button>
+  </div>
+
+  <div id="pControls" class="p-bar p-bottom">
+    <div class="cgroup">
+      <button class="cbtn" data-act="restart"><span data-icon="restart"></span><small>Сначала</small></button>
+      <button class="cbtn" data-act="stop"><span data-icon="stop"></span><small>Стоп</small></button>
+    </div>
+    <div class="cgroup">
+      <button class="cbtn" data-act="back5s"><span data-icon="back"></span><small>5 сек</small></button>
+      <button class="cbtn txt" data-act="back3"><b>−3</b><small>строки</small></button>
+      <button class="cbtn txt" data-act="back1"><b>−1</b><small>строка</small></button>
+      <button class="cbtn play" data-act="toggle" id="btnPlay"><span data-icon="play"></span><small>Старт</small></button>
+      <button class="cbtn txt" data-act="fwd1"><b>+1</b><small>строка</small></button>
+    </div>
+    <div class="cgroup speed">
+      <button class="cbtn" data-act="slower"><span data-icon="minus"></span><small>Медленнее</small></button>
+      <div class="speed-box">
+        <input id="speedSlider" type="range" min="0" max="100" step="0.5" aria-label="Скорость">
+        <div class="speed-label">Скорость <b id="speedVal"></b></div>
+      </div>
+      <button class="cbtn" data-act="faster"><span data-icon="plus"></span><small>Быстрее</small></button>
+    </div>
+  </div>
+
+  <aside id="drawer" class="drawer" aria-label="Настройки">
+    <div class="drawer-head">
+      <b>Настройки</b>
+      <button class="icon-btn" id="drawerClose" aria-label="Закрыть"><span data-icon="close"></span></button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+  </aside>
+</section>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <h3 id="modalTitle"></h3>
+    <div id="modalBody"></div>
+    <input id="modalInput" type="text" class="hidden">
+    <div class="modal-actions">
+      <button id="modalCancel" class="btn">Отмена</button>
+      <button id="modalOk" class="btn primary">OK</button>
+    </div>
+  </div>
+</div>
+<script>window.__SUFFLER_EMBEDDED = true;</script>
+<script>
+/* =========================================================================
+   Суфлёр — автономный телесуфлёр (HTML + CSS + vanilla JS)
+   Все данные хранятся только на этом устройстве (localStorage).
+   ========================================================================= */
+(() => {
+'use strict';
+
+const APP_VERSION = '1.0.0';
+// Однофайловая версия, открытая по ссылке claude.ai (собирается build_single.py).
+// В ней браузер не даёт микрофон, чтение буфера и офлайн-кэш — эти функции прячем.
+const EMBEDDED = !!window.__SUFFLER_EMBEDDED;
+
+/* ----------------------------- утилиты ----------------------------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const now = () => performance.now();
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function fmtTime(sec) {
+  sec = Math.max(0, Math.round(sec || 0));
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return h ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`;
+}
+function debounce(fn, ms) {
+  let t = null;
+  const d = (...a) => { clearTimeout(t); t = setTimeout(() => { t = null; fn(...a); }, ms); };
+  d.flush = () => { if (t) { clearTimeout(t); t = null; fn(); } };
+  d.pending = () => !!t;
+  return d;
+}
+function plural(n, one, few, many) {
+  const a = Math.abs(n) % 100, b = a % 10;
+  if (a > 10 && a < 20) return many;
+  if (b > 1 && b < 5) return few;
+  if (b === 1) return one;
+  return many;
+}
+const fmtNum = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+const fmtSpeed = (v) => (Math.round(v * 10) / 10).toString().replace('.', ',');
+const isIOS = /iP(ad|hone|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isStandalone = () => window.navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || (window.matchMedia && matchMedia('(display-mode: fullscreen)').matches);
+
+/* ----------------------------- иконки ----------------------------- */
+const ICONS = {
+  play: '<path d="M7 4.5v15l12.5-7.5z" fill="currentColor" stroke="none"/>',
+  pause: '<rect x="6" y="4.5" width="4.2" height="15" rx="1" fill="currentColor" stroke="none"/><rect x="13.8" y="4.5" width="4.2" height="15" rx="1" fill="currentColor" stroke="none"/>',
+  stop: '<rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor" stroke="none"/>',
+  restart: '<path d="M6 5v14"/><path d="M19 5.5 9.5 12l9.5 6.5z" fill="currentColor"/>',
+  back: '<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/>',
+  minus: '<path d="M5 12h14"/>',
+  plus: '<path d="M5 12h14M12 5v14"/>',
+  close: '<path d="M6 6l12 12M18 6 6 18"/>',
+  mirror: '<path d="M12 3v18" stroke-dasharray="2 2.5"/><path d="M9 7 4 12l5 5z" fill="currentColor"/><path d="m15 7 5 5-5 5z"/>',
+  sliders: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+  timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2.5h6"/>',
+  full: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  list: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>'
+};
+function icon(name) {
+  return `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
+}
+function fillIcons(root = document) { $$('[data-icon]', root).forEach((el) => { el.outerHTML = icon(el.dataset.icon); }); }
+
+/* ----------------------------- хранилище ----------------------------- */
+const KEYS = {
+  scripts: 'tp.scripts.v1',
+  current: 'tp.current.v1',
+  settings: 'tp.settings.v1',
+  positions: 'tp.positions.v1',
+  session: 'tp.session.v1'
+};
+const Store = {
+  get(key, fallback) {
+    let raw = null;
+    try {
+      raw = localStorage.getItem(key);
+      if (raw == null) return fallback;
+      return JSON.parse(raw);
+    } catch (e) {
+      console.warn('Не удалось прочитать', key, e);
+      try { if (raw != null) localStorage.setItem(key + '.corrupt.' + Date.now(), raw); } catch (_) { /* ignore */ }
+      return fallback;
+    }
+  },
+  set(key, val) {
+    try {
+      localStorage.setItem(key, JSON.stringify(val));
+      return true;
+    } catch (e) {
+      console.error('Ошибка сохранения', key, e);
+      Store.lastError = e;
+      return false;
+    }
+  },
+  lastError: null
+};
+
+/* ----------------------------- настройки ----------------------------- */
+const DEFAULT_KEYMAP = {
+  toggle: ['Space', 'Enter', 'PageDown'],
+  faster: ['ArrowUp'],
+  slower: ['ArrowDown'],
+  nudgeBack: ['ArrowLeft'],
+  nudgeFwd: ['ArrowRight'],
+  back5s: ['PageUp', 'KeyB'],
+  back1: [],
+  back3: [],
+  fwd1: [],
+  home: ['Home'],
+  end: ['End'],
+  restart: ['KeyR'],
+  stop: ['KeyS'],
+  mirror: ['KeyM'],
+  hud: ['KeyT'],
+  exit: ['Escape']
+};
+const ACTION_LABELS = {
+  toggle: 'Пауза / Продолжить',
+  faster: 'Скорость +',
+  slower: 'Скорость −',
+  nudgeBack: 'Немного назад',
+  nudgeFwd: 'Немного вперёд',
+  back5s: 'Назад на 5 секунд',
+  back1: 'Назад 1 строка',
+  back3: 'Назад 3 строки',
+  fwd1: 'Вперёд 1 строка',
+  home: 'В начало текста',
+  end: 'В конец текста',
+  restart: 'Сначала (с отсчётом)',
+  stop: 'Стоп',
+  mirror: 'Зеркало вкл/выкл',
+  hud: 'Время и прогресс',
+  exit: 'Выход из режима чтения'
+};
+
+const DEFAULTS = {
+  fontSize: 64, lineHeight: 1.5, letterSpacing: 0, paraSpacing: 0.6, columnWidth: 52,
+  align: 'left', fontFamily: 'sans', fontWeight: 500,
+  theme: 'dark', brightness: 100, showCues: true,
+  focusEnabled: true, focusY: 33, focusLines: 3, dimStrength: 65, lineMarker: true,
+  speed: 32.5, speedStep: 1, countdown: 3, nudgeLines: 2, tapAction: 'toggle', autoHide: 3,
+  mirrorH: false, mirrorV: false,
+  wpm: 130, showHud: false, autoFullscreen: false,
+  voiceMode: 'off', voiceLang: 'ru-RU', vpSensitivity: 55, vpDelay: 1.2,
+  vfHighlight: true, vfShowHeard: false, voiceConsent: false,
+  keymap: null
+};
+
+const PRESETS = {
+  standard: {
+    title: 'Стандарт', desc: 'Сбалансированные настройки для обычного чтения',
+    values: { fontSize: 64, lineHeight: 1.5, columnWidth: 52, letterSpacing: 0, paraSpacing: 0.6, align: 'left', fontWeight: 500, focusEnabled: true, focusY: 33, focusLines: 3, dimStrength: 65, lineMarker: true }
+  },
+  eye: {
+    title: 'Camera Eye Contact', desc: 'Узкая колонка, крупный текст, ярко видны только 2 строки около камеры — глаза почти не бегают',
+    values: { fontSize: 68, lineHeight: 1.75, columnWidth: 44, letterSpacing: 0.01, paraSpacing: 0.5, align: 'left', fontWeight: 600, focusEnabled: true, focusY: 26, focusLines: 2, dimStrength: 86, lineMarker: true }
+  },
+  glass: {
+    title: 'Стеклянный суфлёр', desc: 'Зеркало по горизонтали, крупный жирный текст для чтения через полупрозрачное стекло',
+    values: { fontSize: 84, lineHeight: 1.5, columnWidth: 70, letterSpacing: 0.01, paraSpacing: 0.6, align: 'left', fontWeight: 700, theme: 'dark', brightness: 100, focusEnabled: true, focusY: 40, focusLines: 3, dimStrength: 55, mirrorH: true, mirrorV: false }
+  }
+};
+
+let S = Object.assign({}, DEFAULTS, Store.get(KEYS.settings, {}));
+// защита от мусора в сохранённых настройках
+for (const k of Object.keys(DEFAULTS)) {
+  if (typeof DEFAULTS[k] === 'number' && !Number.isFinite(Number(S[k]))) S[k] = DEFAULTS[k];
+  else if (typeof DEFAULTS[k] === 'number') S[k] = Number(S[k]);
+}
+if (!S.keymap || typeof S.keymap !== 'object') S.keymap = JSON.parse(JSON.stringify(DEFAULT_KEYMAP));
+for (const a of Object.keys(DEFAULT_KEYMAP)) if (!Array.isArray(S.keymap[a])) S.keymap[a] = DEFAULT_KEYMAP[a].slice();
+
+const saveSettings = debounce(() => { Store.set(KEYS.settings, S); }, 250);
+
+/* ----------------------------- разбор текста ----------------------------- */
+const CUE_RE = /\[[^\[\]\n]{1,80}\]/g;
+let WORD_RE;
+try { WORD_RE = new RegExp('[\\p{L}\\p{N}]+(?:[-‐‑\'’][\\p{L}\\p{N}]+)*', 'gu'); }
+catch (e) { WORD_RE = /[0-9A-Za-zÀ-ÿЀ-ӿ]+(?:[-'’][0-9A-Za-zÀ-ÿЀ-ӿ]+)*/g; }
+
+function normWord(w) {
+  return w.toLowerCase().replace(/ё/g, 'е').replace(/[-‐‑'’]/g, '');
+}
+function countWords(text) {
+  const clean = text.replace(CUE_RE, ' ');
+  const m = clean.match(WORD_RE);
+  return m ? m.length : 0;
+}
+function countPauses(text) {
+  const m = text.match(/\[\s*пауза[^\]]*\]/gi);
+  return m ? m.length : 0;
+}
+function estimateSeconds(text, wpm) {
+  return countWords(text) / Math.max(40, wpm) * 60 + countPauses(text) * 2;
+}
+function parseScript(text) {
+  const words = [];
+  const paras = text.replace(/\r\n?/g, '\n').split(/\n[ \t ]*\n+/);
+  let html = '';
+  const wordsHtml = (seg) => {
+    let out = '', last = 0;
+    WORD_RE.lastIndex = 0;
+    for (const m of seg.matchAll(WORD_RE)) {
+      out += escapeHtml(seg.slice(last, m.index)) + '<span class="w">' + escapeHtml(m[0]) + '</span>';
+      words.push(normWord(m[0]));
+      last = m.index + m[0].length;
+    }
+    return out + escapeHtml(seg.slice(last));
+  };
+  for (const para of paras) {
+    if (!para.trim()) continue;
+    const lines = para.replace(/^\n+|\n+$/g, '').split('\n');
+    let ph = '';
+    lines.forEach((line, li) => {
+      if (li) ph += '<br>';
+      let last = 0;
+      for (const m of line.matchAll(CUE_RE)) {
+        ph += wordsHtml(line.slice(last, m.index));
+        ph += '<span class="cue">' + escapeHtml(m[0].slice(1, -1).trim()) + '</span>';
+        last = m.index + m[0].length;
+      }
+      ph += wordsHtml(line.slice(last));
+    });
+    html += '<p>' + ph + '</p>';
+  }
+  return { html, words };
+}
+
+/* ----------------------------- сценарии ----------------------------- */
+const WELCOME_TEXT = `Добро пожаловать в Суфлёр.
+
+Это пример сценария. Сотрите его и вставьте свой текст — он сохраняется автоматически, даже если Safari случайно закроется.
+
+[ПАУЗА]
+
+Пустая строка между абзацами создаёт новый абзац. Режиссёрские пометки пишите в квадратных скобках — например, [УЛЫБКА] или [ТИШЕ]. В суфлёре они выглядят иначе, чем текст, и не считаются словами.
+
+Нажмите «Начать», чтобы перейти в режим чтения. Одно касание по экрану — пауза или продолжение. Панель управления появится сама, а через несколько секунд снова спрячется.
+
+[СМОТРИТ В СТОРОНУ]
+
+Совет: чтобы взгляд оставался у камеры, выберите в настройках пресет «Camera Eye Contact» и расположите iPad так, чтобы зона чтения была как можно ближе к объективу iPhone.`;
+
+let scripts = Store.get(KEYS.scripts, []);
+if (!Array.isArray(scripts)) scripts = [];
+scripts = scripts.filter((s) => s && typeof s.id === 'string').map((s) => ({
+  id: s.id, name: String(s.name || 'Без названия'), text: String(s.text || ''),
+  autoName: !!s.autoName, created: s.created || Date.now(), updated: s.updated || Date.now()
+}));
+let positions = Store.get(KEYS.positions, {});
+if (!positions || typeof positions !== 'object') positions = {};
+let currentId = Store.get(KEYS.current, null);
+
+function newScript(text = '', name = null) {
+  const sc = { id: uid(), name: name || deriveName(text) || 'Новый сценарий', text, autoName: !name, created: Date.now(), updated: Date.now() };
+  scripts.unshift(sc);
+  return sc;
+}
+if (!scripts.length) {
+  const sc = newScript(WELCOME_TEXT, 'Пример: как пользоваться');
+  currentId = sc.id;
+  Store.set(KEYS.scripts, scripts);
+  Store.set(KEYS.current, currentId);
+}
+if (!scripts.find((s) => s.id === currentId)) currentId = scripts[0].id;
+
+function currentScript() { return scripts.find((s) => s.id === currentId) || scripts[0]; }
+function saveScripts() {
+  const ok = Store.set(KEYS.scripts, scripts) && Store.set(KEYS.current, currentId);
+  setSaveState(ok ? 'saved' : 'error');
+  if (!ok) toast('Не удалось сохранить: память браузера заполнена. Сделайте «Экспорт TXT» или резервную копию.', { duration: 8000 });
+  return ok;
+}
+function deriveName(text) {
+  const line = (text || '').split('\n').map((l) => l.replace(CUE_RE, '').trim()).find((l) => l.length > 0) || '';
+  return line.length > 48 ? line.slice(0, 46).trim() + '…' : line;
+}
+const savePositions = debounce(() => Store.set(KEYS.positions, positions), 300);
+
+/* ----------------------------- UI: toast / modal ----------------------------- */
+const toastEl = $('#toast');
+let toastTimer = null;
+function toast(msg, opts = {}) {
+  toastEl.innerHTML = '';
+  const span = document.createElement('span');
+  span.textContent = msg;
+  toastEl.appendChild(span);
+  if (opts.action) {
+    const b = document.createElement('button');
+    b.textContent = opts.action;
+    b.onclick = () => { hideToast(); opts.onAction && opts.onAction(); };
+    toastEl.appendChild(b);
+  }
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, opts.duration || 3200);
+}
+function hideToast() { toastEl.classList.remove('show'); }
+
+const modalEl = $('#modal');
+let modalResolve = null;
+function modal({ title, html = '', input = null, ok = 'OK', cancel = 'Отмена', danger = false }) {
+  return new Promise((resolve) => {
+    if (modalResolve) modalResolve(null);
+    modalResolve = resolve;
+    $('#modalTitle').textContent = title;
+    $('#modalBody').innerHTML = html;
+    const inp = $('#modalInput');
+    inp.classList.toggle('hidden', input == null);
+    if (input != null) inp.value = input;
+    $('#modalOk').textContent = ok;
+    $('#modalOk').style.background = danger ? 'var(--danger)' : '';
+    $('#modalOk').style.borderColor = danger ? 'var(--danger)' : '';
+    $('#modalCancel').textContent = cancel;
+    $('#modalCancel').classList.toggle('hidden', cancel == null);
+    modalEl.classList.remove('hidden');
+    if (input != null) setTimeout(() => { inp.focus(); inp.select(); }, 50);
+  });
+}
+function closeModal(result) {
+  modalEl.classList.add('hidden');
+  const r = modalResolve; modalResolve = null;
+  if (r) r(result);
+}
+$('#modalOk').onclick = () => closeModal($('#modalInput').classList.contains('hidden') ? true : $('#modalInput').value);
+$('#modalCancel').onclick = () => closeModal(null);
+modalEl.addEventListener('click', (e) => { if (e.target === modalEl) closeModal(null); });
+$('#modalInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('#modalOk').click(); } });
+const isModalOpen = () => !modalEl.classList.contains('hidden');
+
+/* =========================================================================
+   РЕДАКТОР (SCRIPT)
+   ========================================================================= */
+const editorEl = $('#editor');
+const saveStateEl = $('#saveState');
+function setSaveState(st) {
+  saveStateEl.className = 'save-state ' + st;
+  saveStateEl.textContent = st === 'saving' ? 'Сохранение…' : st === 'error' ? 'Ошибка сохранения!' : 'Сохранено на устройстве';
+}
+
+const commitEditor = debounce(() => {
+  const sc = currentScript();
+  if (sc.text !== editorEl.value) {
+    sc.text = editorEl.value;
+    sc.updated = Date.now();
+    if (sc.autoName) sc.name = deriveName(sc.text) || 'Новый сценарий';
+  }
+  saveScripts();
+  renderLibrary();
+  renderScriptHead();
+  updateStats();
+}, 400);
+
+editorEl.addEventListener('input', () => { setSaveState('saving'); commitEditor(); });
+editorEl.addEventListener('blur', () => commitEditor.flush());
+
+function loadEditor() {
+  const sc = currentScript();
+  if (editorEl.value !== sc.text) editorEl.value = sc.text;
+  renderScriptHead();
+  renderLibrary();
+  updateStats();
+}
+function renderScriptHead() {
+  const sc = currentScript();
+  $('#scriptName').textContent = sc.name || 'Без названия';
+  const pos = positions[sc.id];
+  const btn = $('#btnResume');
+  if (pos && pos.pct > 0.01 && pos.pct < 0.99) {
+    btn.textContent = `Продолжить с ${Math.round(pos.pct * 100)}%`;
+    btn.classList.remove('hidden');
+  } else btn.classList.add('hidden');
+}
+function updateStats() {
+  const text = editorEl.value;
+  const n = countWords(text);
+  $('#statWords').textContent = `${fmtNum(n)} ${plural(n, 'слово', 'слова', 'слов')}`;
+  $('#statDuration').textContent = fmtTime(estimateSeconds(text, S.wpm));
+}
+function fmtDate(ts) {
+  const d = new Date(ts), t = new Date();
+  if (d.toDateString() === t.toDateString()) return 'сегодня ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+}
+function renderLibrary() {
+  const ul = $('#scriptList');
+  const sorted = scripts.slice().sort((a, b) => b.updated - a.updated);
+  ul.innerHTML = sorted.map((s) => {
+    const n = countWords(s.text);
+    return `<li data-id="${s.id}" class="${s.id === currentId ? 'active' : ''}"><div class="nm">${escapeHtml(s.name || 'Без названия')}</div><div class="mt">${fmtNum(n)} ${plural(n, 'слово', 'слова', 'слов')} · ≈${fmtTime(estimateSeconds(s.text, S.wpm))} · ${fmtDate(s.updated)}</div></li>`;
+  }).join('');
+  let used = 0;
+  try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); used += (k.length + (localStorage.getItem(k) || '').length) * 2; } } catch (_) { /* ignore */ }
+  $('#libFoot').textContent = `${scripts.length} ${plural(scripts.length, 'сценарий', 'сценария', 'сценариев')} · занято ${(used / 1048576).toFixed(2)} МБ · только на этом устройстве`;
+}
+function selectScript(id) {
+  commitEditor.flush();
+  currentId = id;
+  saveScripts();
+  loadEditor();
+  closeLibrary();
+}
+$('#scriptList').addEventListener('click', (e) => {
+  const li = e.target.closest('li[data-id]');
+  if (li) selectScript(li.dataset.id);
+});
+$('#btnNew').onclick = () => {
+  commitEditor.flush();
+  const sc = newScript('');
+  currentId = sc.id;
+  saveScripts();
+  loadEditor();
+  closeLibrary();
+  editorEl.focus();
+};
+async function renameCurrent() {
+  const sc = currentScript();
+  const name = await modal({ title: 'Переименовать сценарий', input: sc.name, ok: 'Сохранить' });
+  if (name == null) return;
+  const v = name.trim();
+  if (!v) return;
+  sc.name = v.slice(0, 120); sc.autoName = false; sc.updated = Date.now();
+  saveScripts(); renderLibrary(); renderScriptHead();
+}
+$('#btnRename').onclick = renameCurrent;
+$('#scriptName').onclick = renameCurrent;
+$('#btnDuplicate').onclick = () => {
+  commitEditor.flush();
+  const src = currentScript();
+  const sc = newScript(src.text, (src.name || 'Сценарий') + ' (копия)');
+  currentId = sc.id;
+  saveScripts(); loadEditor();
+  toast('Создана копия сценария');
+};
+$('#btnDelete').onclick = async () => {
+  commitEditor.flush();
+  const sc = currentScript();
+  const ok = await modal({ title: 'Удалить сценарий?', html: `<p>«${escapeHtml(sc.name)}» будет удалён с этого устройства.</p>`, ok: 'Удалить', danger: true });
+  if (!ok) return;
+  const idx = scripts.indexOf(sc);
+  scripts.splice(idx, 1);
+  const pos = positions[sc.id]; delete positions[sc.id]; savePositions();
+  if (!scripts.length) newScript('');
+  currentId = scripts[0].id;
+  saveScripts(); loadEditor();
+  toast('Сценарий удалён', {
+    action: 'Вернуть', duration: 8000,
+    onAction: () => { scripts.splice(idx, 0, sc); if (pos) positions[sc.id] = pos; savePositions(); currentId = sc.id; saveScripts(); loadEditor(); }
+  });
+};
+$('#btnClear').onclick = () => {
+  if (!editorEl.value) return;
+  const old = editorEl.value;
+  editorEl.value = '';
+  commitEditor(); commitEditor.flush();
+  toast('Текст очищен', { action: 'Вернуть', duration: 8000, onAction: () => { editorEl.value = old; commitEditor(); commitEditor.flush(); } });
+};
+function insertAtCursor(txt) {
+  const el = editorEl;
+  const start = el.selectionStart ?? el.value.length, end = el.selectionEnd ?? el.value.length;
+  el.value = el.value.slice(0, start) + txt + el.value.slice(end);
+  const p = start + txt.length;
+  el.focus();
+  try { el.setSelectionRange(p, p); } catch (_) { /* ignore */ }
+  setSaveState('saving'); commitEditor();
+}
+$('#btnPaste').onclick = async () => {
+  try {
+    if (!navigator.clipboard || !navigator.clipboard.readText) throw new Error('no clipboard');
+    const t = await navigator.clipboard.readText();
+    if (!t) { toast('Буфер обмена пуст'); return; }
+    insertAtCursor(t.replace(/\r\n?/g, '\n'));
+    toast('Текст вставлен');
+  } catch (e) {
+    editorEl.focus();
+    toast('Браузер не дал прочитать буфер. Коснитесь поля текста и выберите «Вставить» (или ⌘V).', { duration: 6000 });
+  }
+};
+// маркеры
+['ПАУЗА', 'УЛЫБКА', 'СМЕХ', 'ТИШЕ', 'ГРОМЧЕ', 'СМОТРИТ В СТОРОНУ', 'ВДОХ', 'АКЦЕНТ'].forEach((c) => {
+  const b = document.createElement('button');
+  b.className = 'chip'; b.textContent = c;
+  b.onclick = () => {
+    const el = editorEl;
+    const start = el.selectionStart ?? el.value.length;
+    const before = el.value.slice(0, start);
+    const pre = before && !/\s$/.test(before) ? ' ' : '';
+    insertAtCursor(`${pre}[${c}] `);
+  };
+  $('#cueRow').appendChild(b);
+});
+
+// импорт / экспорт
+$('#btnImport').onclick = () => $('#fileInput').click();
+$('#fileInput').addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const buf = await file.arrayBuffer();
+    let text;
+    try { text = new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+    catch (_) {
+      try { text = new TextDecoder('windows-1251').decode(buf); } catch (__) { text = new TextDecoder('utf-8').decode(buf); }
+    }
+    text = text.replace(/^﻿/, '').replace(/\r\n?/g, '\n');
+    commitEditor.flush();
+    const sc = newScript(text, file.name.replace(/\.[^.]+$/, '') || null);
+    currentId = sc.id;
+    saveScripts(); loadEditor();
+    { const n = countWords(text); toast(`Импортировано: ${fmtNum(n)} ${plural(n, 'слово', 'слова', 'слов')}`); }
+  } catch (err) {
+    console.error(err);
+    toast('Не удалось прочитать файл');
+  }
+});
+function safeFileName(name) { return (name || 'сценарий').replace(/[\\/:*?"<>|\n\r]+/g, ' ').trim().slice(0, 80) || 'сценарий'; }
+async function shareOrDownload(content, filename, mime) {
+  if (EMBEDDED) {
+    const dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null;
+    if (!dl) { toast('Сохранение файлов недоступно в этом окне'); return; }
+    try { await dl.save({ filename, data: content }); toast('Файл сохранён'); }
+    catch (e) { if (!e || e.code !== 'declined') toast('Не удалось сохранить файл'); }
+    return;
+  }
+  const blob = new Blob([content], { type: mime });
+  // На iPad в режиме приложения надёжнее «Поделиться» → «Сохранить в Файлы»
+  try {
+    const file = new File([blob], filename, { type: mime });
+    if (isIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: filename });
+      return;
+    }
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+$('#btnExport').onclick = () => {
+  commitEditor.flush();
+  const sc = currentScript();
+  shareOrDownload('﻿' + sc.text.replace(/\n/g, '\r\n'), safeFileName(sc.name) + '.txt', 'text/plain;charset=utf-8');
+};
+
+// wpm в футере
+const wpmInput = $('#wpmInput');
+wpmInput.value = S.wpm;
+wpmInput.addEventListener('change', () => {
+  setSetting('wpm', clamp(Math.round(Number(wpmInput.value) || 130), 40, 300));
+  wpmInput.value = S.wpm;
+});
+wpmInput.addEventListener('input', () => {
+  const v = Number(wpmInput.value);
+  if (v >= 40 && v <= 300) { S.wpm = v; saveSettings(); updateStats(); renderLibrary(); }
+});
+
+// библиотека на узком экране
+function closeLibrary() { $('.editor-body').classList.remove('lib-open'); }
+$('#btnLibrary').onclick = () => $('.editor-body').classList.toggle('lib-open');
+$('#libScrim').onclick = closeLibrary;
+
+$('#btnStart').onclick = () => openPrompter({ fromStart: true, autostart: true });
+$('#btnResume').onclick = () => openPrompter({ fromStart: false, autostart: true });
+
+/* =========================================================================
+   НАВИГАЦИЯ МЕЖДУ РАЗДЕЛАМИ
+   ========================================================================= */
+let currentView = 'script';
+function setSession() { Store.set(KEYS.session, { view: currentView, id: currentId, t: Date.now() }); }
+$$('[data-go]').forEach((b) => b.addEventListener('click', () => {
+  const go = b.dataset.go;
+  if (go === 'script') return;
+  if (go === 'prompter') openPrompter({ fromStart: false, autostart: false });
+  if (go === 'settings') openPrompter({ fromStart: false, autostart: false, settings: true });
+}));
+function showEditor() {
+  currentView = 'script';
+  $('#prompterView').classList.remove('active');
+  $('#editorView').classList.add('active');
+  loadEditor();
+  setSession();
+}
+
+/* =========================================================================
+   PROMPTER
+   ========================================================================= */
+const pv = $('#prompterView');
+const stage = $('#stage');
+const mirrorEl = $('#mirror');
+const scroller = $('#scroller');
+const col = $('#col');
+const cdEl = $('#countdown');
+const hudEl = $('#hud');
+const heardEl = $('#heard');
+
+const P = {
+  state: 'idle',        // idle | countdown | playing | paused | ended
+  pos: 0,               // px: верх строки, стоящей на линии чтения
+  vel: 0,               // текущая скорость px/s
+  jump: 0,              // остаток плавного прыжка
+  maxPos: 0,
+  LH: 64, readY: 0, H: 0, W: 0,
+  tops: new Float64Array(0),
+  wordEls: [], words: [],
+  renderedText: null, renderedId: null,
+  lastY: null,
+  elapsed: 0,
+  dragging: false,
+  runtimeVoice: 'off',  // фактический режим голоса в этом сеансе
+  rafId: 0, lastT: 0,
+  cdTimer: null,
+  hideTimer: null,
+  lastPosSave: 0,
+  lastHud: 0,
+  layoutQueued: false
+};
+
+/* --- скорость: 0..100 условных единиц; 1 единица ≈ 4 слова в минуту.
+   Скорость привязана к количеству слов, а не к пикселям, поэтому темп речи
+   не меняется при смене шрифта, ширины колонки или пресета. --- */
+const WPM_PER_UNIT = 4;
+const speedWpm = (sp = S.speed) => clamp(sp, 0, 100) * WPM_PER_UNIT;
+const pxPerSec = () => speedWpm() / 60 * (P.pxPerWord || P.LH / 3);
+
+function fontStack(f) {
+  if (f === 'serif') return '"New York", "Iowan Old Style", Georgia, "Times New Roman", serif';
+  if (f === 'rounded') return 'ui-rounded, "SF Pro Rounded", -apple-system, "Segoe UI", Roboto, sans-serif';
+  return '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+}
+
+function applyStyles() {
+  const st = pv.style;
+  // ширина колонки считается от длинной стороны экрана — тогда физическая ширина
+  // (а значит и движение глаз) одинакова в Landscape и Portrait
+  const W = Math.max(window.innerWidth, window.innerHeight);
+  const LH = S.fontSize * S.lineHeight;
+  st.setProperty('--fs', S.fontSize + 'px');
+  st.setProperty('--lh', String(S.lineHeight));
+  st.setProperty('--ls', S.letterSpacing + 'em');
+  st.setProperty('--ps', (S.paraSpacing * LH).toFixed(1) + 'px');
+  st.setProperty('--colw', Math.round(W * S.columnWidth / 100) + 'px');
+  st.setProperty('--align', S.align);
+  st.setProperty('--font', fontStack(S.fontFamily));
+  st.setProperty('--weight', String(S.fontWeight));
+  st.setProperty('--bright', String(S.brightness / 100));
+  st.setProperty('--dim', String(S.dimStrength / 100));
+  pv.classList.remove('theme-dark', 'theme-light', 'theme-gray', 'theme-amber');
+  pv.classList.add('theme-' + S.theme);
+  pv.classList.toggle('no-cues', !S.showCues);
+  pv.classList.toggle('no-focus', !S.focusEnabled);
+  pv.classList.toggle('no-marker', !S.lineMarker);
+  pv.classList.toggle('show-hud', !!S.showHud);
+  pv.classList.toggle('vf-highlight', !!S.vfHighlight && P.runtimeVoice === 'follow');
+  pv.classList.toggle('show-heard', !!S.vfShowHeard && P.runtimeVoice === 'follow');
+  mirrorEl.style.transform = `scale(${S.mirrorH ? -1 : 1}, ${S.mirrorV ? -1 : 1})`;
+  $('#btnMirror').classList.toggle('on', S.mirrorH || S.mirrorV);
+  $('#btnHud').classList.toggle('on', !!S.showHud);
+  const meta = $('meta[name=theme-color]');
+  if (meta) meta.content = S.theme === 'light' && currentView !== 'script' ? '#ffffff' : '#000000';
+}
+
+function renderText(force) {
+  const sc = currentScript();
+  if (!force && P.renderedText === sc.text && P.renderedId === sc.id) return false;
+  const r = parseScript(sc.text);
+  col.innerHTML = r.html || '<p class="empty">Текст сценария пуст. Откройте раздел «Сценарий» и вставьте текст.</p>';
+  P.words = r.words;
+  P.wordEls = Array.from(col.getElementsByClassName('w'));
+  P.renderedText = sc.text;
+  P.renderedId = sc.id;
+  P.saidUpTo = -1;
+  return true;
+}
+
+function measure() {
+  P.H = stage.clientHeight || window.innerHeight;
+  P.W = stage.clientWidth || window.innerWidth;
+  P.LH = S.fontSize * S.lineHeight;
+  P.readY = Math.round(P.H * S.focusY / 100);
+  const n = P.wordEls.length;
+  const tops = new Float64Array(n);
+  let delta = 0;
+  if (n) {
+    const first = P.wordEls[0];
+    const p = first.parentElement;
+    delta = first.offsetTop - (p ? p.offsetTop : 0);
+    if (delta < 0 || delta > P.LH * 0.8) delta = (P.LH - S.fontSize * 1.2) / 2;
+    for (let i = 0; i < n; i++) tops[i] = P.wordEls[i].offsetTop - delta;
+  }
+  P.tops = tops;
+  const last = col.lastElementChild;
+  const contentH = last ? last.offsetTop + last.offsetHeight : 0;
+  P.maxPos = n ? Math.max(0, tops[n - 1]) : Math.max(0, contentH - P.LH);
+  // средняя «высота» одного слова в пикселях — для скорости в словах/мин
+  P.pxPerWord = n >= 20 ? (P.maxPos + P.LH) / n : P.LH / 3;
+  // фокус-зона
+  const st = pv.style;
+  const band = S.focusLines * P.LH;
+  st.setProperty('--readY', P.readY + 'px');
+  st.setProperty('--bandEnd', (P.readY + band) + 'px');
+  st.setProperty('--feather', Math.round(P.LH * 0.45) + 'px');
+  st.setProperty('--markY', (P.readY + P.LH / 2) + 'px');
+  const colW = col.offsetWidth;
+  const colL = (P.W - colW) / 2;
+  st.setProperty('--markL', colL + 'px');
+  st.setProperty('--markR', (colL + colW) + 'px');
+}
+
+function anchorIndex(pos) {
+  const t = P.tops; let lo = 0, hi = t.length - 1, ans = 0;
+  if (hi < 0) return -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (t[mid] <= pos + 2) { ans = mid; lo = mid + 1; } else hi = mid - 1;
+  }
+  // первое слово этой строки
+  const lineTop = t[ans];
+  while (ans > 0 && Math.abs(t[ans - 1] - lineTop) < 2) ans--;
+  return ans;
+}
+
+/** Пересчитать раскладку, удерживая то же слово на линии чтения */
+function relayout(forceText) {
+  const oldLH = P.LH;
+  const a = P.tops.length ? anchorIndex(P.pos) : -1;
+  const off = a >= 0 ? (P.pos - P.tops[a]) / (oldLH || 1) : 0;
+  const ratio = P.maxPos ? P.pos / P.maxPos : 0;
+  const changed = renderText(forceText);
+  applyStyles();
+  measure();
+  if (changed) {
+    P.pos = clamp(ratio * P.maxPos, 0, P.maxPos);
+    const ai = anchorIndex(P.pos); if (ai >= 0) P.pos = P.tops[ai];
+  } else if (a >= 0 && a < P.tops.length) {
+    P.pos = clamp(P.tops[a] + clamp(off, 0, 1) * P.LH, 0, P.maxPos);
+  } else P.pos = clamp(P.pos, 0, P.maxPos);
+  P.lastY = null;
+  paint();
+  updateProgressUI();
+}
+function queueRelayout() {
+  if (P.layoutQueued) return;
+  P.layoutQueued = true;
+  requestAnimationFrame(() => { P.layoutQueued = false; if (currentView !== 'script') relayout(false); });
+}
+
+function paint() {
+  const y = P.readY - P.pos;
+  if (y !== P.lastY) {
+    scroller.style.transform = `translate3d(0,${y.toFixed(2)}px,0)`;
+    P.lastY = y;
+  }
+}
+
+/* --- открытие / выход --- */
+function openPrompter({ fromStart = false, autostart = false, settings = false } = {}) {
+  commitEditor.flush();
+  currentView = settings ? 'settings' : 'prompter';
+  $('#editorView').classList.remove('active');
+  pv.classList.add('active');
+  P.runtimeVoice = 'off';
+  setState('idle');
+  P.vel = 0; P.jump = 0; P.elapsed = 0;
+  renderText(false);
+  applyStyles();
+  measure();
+  const sc = currentScript();
+  const saved = positions[sc.id];
+  if (fromStart || !saved) P.pos = 0;
+  else {
+    const w = saved.w | 0;
+    P.pos = (w >= 0 && w < P.tops.length) ? P.tops[w] : clamp((saved.pct || 0) * P.maxPos, 0, P.maxPos);
+  }
+  P.lastY = null; paint();
+  $('#pTitle').textContent = sc.name || 'Без названия';
+  updateProgressUI();
+  updateSpeedUI();
+  if (settings) openDrawer(); else closeDrawer();
+  showControls(true);
+  setSession();
+  startLoop();
+  requestWakeLock();
+  if (autostart) {
+    if (S.autoFullscreen) enterFullscreen();
+    start();
+  } else if (!settings && !fromStart && saved && saved.pct > 0.01) {
+    toast('Позиция восстановлена. Нажмите ▶ или коснитесь экрана.');
+  }
+}
+
+function exitPrompter() {
+  stopVoice();
+  clearCountdown();
+  if (P.state === 'playing') setState('paused');
+  savePosition(true);
+  releaseWakeLock();
+  exitFullscreen();
+  closeDrawer();
+  cancelAnimationFrame(P.rafId); P.rafId = 0;
+  showEditor();
+}
+
+/* --- состояние --- */
+function setState(st) {
+  P.state = st;
+  pv.classList.toggle('ended', st === 'ended');
+  const btn = $('#btnPlay');
+  const playing = st === 'playing' || st === 'countdown';
+  btn.innerHTML = icon(playing ? 'pause' : 'play') + `<small>${playing ? 'Пауза' : (st === 'paused' ? 'Дальше' : 'Старт')}</small>`;
+  const labels = { idle: 'Готов', countdown: 'Отсчёт…', playing: 'Чтение', paused: 'Пауза', ended: 'Конец' };
+  $('#pStatus').textContent = labels[st] || '';
+  if (st === 'playing') scheduleHide(); else showControls(true);
+}
+
+function start() {
+  if (currentView === 'script') return;
+  if (P.state === 'ended' || P.pos >= P.maxPos - 1) { P.pos = 0; P.jump = 0; P.lastY = null; paint(); }
+  P.elapsed = 0;
+  P.voiceFallback = false;
+  startVoice(); // запрос микрофона — сразу по жесту пользователя
+  runCountdown(S.countdown, () => play());
+}
+function play() {
+  if (P.state === 'ended') { P.pos = 0; }
+  setState('playing');
+  if (P.runtimeVoice === 'follow') VoiceFollow.resume();
+}
+function pause() {
+  clearCountdown();
+  if (P.state === 'playing' || P.state === 'countdown') setState('paused');
+  if (P.runtimeVoice === 'follow') VoiceFollow.pause();
+  savePosition(true);
+}
+function togglePlay() {
+  if (P.state === 'playing' || P.state === 'countdown') pause();
+  else if (P.state === 'paused') { if (P.runtimeVoice === 'off' && S.voiceMode !== 'off' && !P.voiceFallback) startVoice(); play(); }
+  else start();
+}
+function stopAll() {
+  clearCountdown();
+  stopVoice();
+  setState('idle');
+  P.elapsed = 0;
+  jumpTo(0);
+  savePosition(true, 0);
+}
+function restart() {
+  clearCountdown();
+  P.jump = 0; P.vel = 0; P.pos = 0; P.lastY = null; paint();
+  if (P.runtimeVoice === 'follow') VoiceFollow.resync();
+  setState('idle');
+  start();
+}
+
+/* --- обратный отсчёт --- */
+function runCountdown(sec, done) {
+  clearCountdown();
+  if (!sec) { done(); return; }
+  setState('countdown');
+  let n = sec;
+  cdEl.textContent = n; cdEl.classList.add('on');
+  P.cdTimer = setInterval(() => {
+    n--;
+    if (n <= 0) { clearCountdown(); done(); }
+    else cdEl.textContent = n;
+  }, 1000);
+}
+function clearCountdown() {
+  if (P.cdTimer) { clearInterval(P.cdTimer); P.cdTimer = null; }
+  cdEl.classList.remove('on');
+}
+
+/* --- перемещения --- */
+function jumpBy(dy) {
+  const target = clamp(P.pos + P.jump + dy, 0, P.maxPos);
+  P.jump = target - P.pos;
+  if (P.state === 'ended' && dy < 0) setState('paused');
+  afterManualMove();
+}
+function jumpTo(y) { jumpBy(y - (P.pos + P.jump)); }
+function afterManualMove() {
+  if (P.runtimeVoice === 'follow') setTimeout(() => VoiceFollow.resync(), 350);
+  showControls();
+}
+const lines = (n) => n * P.LH;
+function back5s() {
+  let dy;
+  if (P.runtimeVoice === 'follow') {
+    const wordsBack = Math.max(3, Math.round(S.wpm / 60 * 5));
+    const i = Math.max(0, anchorIndex(P.pos + P.jump) - wordsBack);
+    dy = (P.tops[i] || 0) - (P.pos + P.jump);
+  } else {
+    dy = -Math.max(pxPerSec() * 5, P.LH);
+  }
+  jumpBy(dy);
+}
+
+/* --- скорость --- */
+function setSpeed(v, quiet) {
+  S.speed = clamp(Math.round(v * 2) / 2, 0, 100);
+  saveSettings();
+  updateSpeedUI();
+  if (!quiet) showControls();
+}
+function updateSpeedUI() {
+  $('#speedSlider').value = S.speed;
+  $('#speedVal').textContent = `${fmtSpeed(S.speed)} · ≈${Math.round(speedWpm())} сл/мин`;
+  syncSettingsUI('speed');
+}
+$('#speedSlider').addEventListener('input', (e) => setSpeed(Number(e.target.value), true));
+
+/* --- главный цикл (requestAnimationFrame) --- */
+function startLoop() {
+  if (P.rafId) return;
+  P.lastT = now();
+  const frame = (t) => {
+    P.rafId = requestAnimationFrame(frame);
+    const dt = Math.min(0.1, Math.max(0, (t - P.lastT) / 1000));
+    P.lastT = t;
+    tick(dt, t);
+  };
+  P.rafId = requestAnimationFrame(frame);
+}
+
+function tick(dt, t) {
+  const playing = P.state === 'playing';
+  let target = 0;
+  let tau = P.state === 'playing' ? 0.18 : 0.1;
+
+  if (P.runtimeVoice === 'pause') VoicePause.sample(t);
+
+  if (playing && !P.dragging) {
+    if (P.runtimeVoice === 'follow') {
+      // следование за голосом: плавно подтягиваемся к распознанному слову
+      const tgt = VoiceFollow.targetPos();
+      if (tgt != null) {
+        const k = 1 - Math.exp(-dt / 0.32);
+        P.pos += (clamp(tgt, 0, P.maxPos) - P.pos) * k;
+      }
+      P.vel = 0;
+    } else {
+      target = pxPerSec();
+      if (P.runtimeVoice === 'pause') {
+        const gate = VoicePause.speaking ? 1 : 0;
+        target *= gate;
+        tau = gate ? 0.35 : 0.6; // плавный разгон и плавная остановка
+      }
+    }
+  }
+  if (P.runtimeVoice !== 'follow' || !playing) {
+    P.vel += (target - P.vel) * (1 - Math.exp(-dt / tau));
+    if (Math.abs(P.vel) < 0.05 && target === 0) P.vel = 0;
+    if (!P.dragging) P.pos += P.vel * dt;
+  }
+  // плавные прыжки (назад/вперёд по строкам)
+  if (P.jump !== 0) {
+    if (Math.abs(P.jump) < 0.5) { P.pos += P.jump; P.jump = 0; }
+    else { const m = P.jump * (1 - Math.exp(-dt / 0.09)); P.pos += m; P.jump -= m; }
+  }
+  if (P.pos < 0) { P.pos = 0; }
+  if (P.pos > P.maxPos) {
+    P.pos = P.maxPos;
+    if (playing && P.runtimeVoice !== 'follow') { setState('ended'); P.vel = 0; savePosition(true); }
+  }
+  if (playing) P.elapsed += dt;
+  paint();
+
+  if (t - P.lastHud > 250) { P.lastHud = t; updateProgressUI(); }
+  if (playing && t - P.lastPosSave > 1500) { P.lastPosSave = t; savePosition(false); }
+}
+
+function progressPct() { return P.maxPos ? clamp(P.pos / P.maxPos, 0, 1) : 0; }
+function remainingSeconds() {
+  const pct = progressPct();
+  if (P.runtimeVoice === 'follow' || P.runtimeVoice === 'pause' || S.speed <= 0) {
+    const wordsLeft = Math.max(0, P.words.length - Math.max(0, anchorIndex(P.pos)));
+    return wordsLeft / Math.max(40, S.wpm) * 60;
+  }
+  const pps = pxPerSec();
+  return pps > 0 ? (P.maxPos - P.pos) / pps : (1 - pct) * estimateSeconds(currentScript().text, S.wpm);
+}
+function updateProgressUI() {
+  const pct = progressPct();
+  $('#pProgress').style.width = (pct * 100).toFixed(1) + '%';
+  const el = fmtTime(P.elapsed), rem = fmtTime(remainingSeconds()), pc = Math.round(pct * 100) + '%';
+  hudEl.innerHTML = `${el} прошло<br>≈${rem} осталось<br>${pc}`;
+  const st = $('#pStatus');
+  const lbl = { idle: 'Готов', countdown: 'Отсчёт…', playing: 'Чтение', paused: 'Пауза', ended: 'Конец' }[P.state];
+  st.textContent = `${lbl} · ${el} · осталось ≈${rem} · ${pc}`;
+}
+
+function savePosition(immediate, forcePos) {
+  const sc = currentScript();
+  if (!sc || !P.maxPos && forcePos == null) return;
+  const pos = forcePos != null ? forcePos : P.pos + P.jump;
+  const w = forcePos === 0 ? 0 : anchorIndex(pos);
+  positions[sc.id] = { w: Math.max(0, w), pct: P.maxPos ? clamp(pos / P.maxPos, 0, 1) : 0, t: Date.now() };
+  if (immediate) savePositions.flush ? (savePositions(), savePositions.flush()) : savePositions();
+  else savePositions();
+}
+
+/* --- панель управления --- */
+function showControls(stay) {
+  pv.classList.remove('controls-hidden');
+  if (!stay) scheduleHide();
+  else clearTimeout(P.hideTimer);
+}
+function hideControls() {
+  if (P.state !== 'playing') return;
+  if (pv.classList.contains('drawer-open')) return;
+  pv.classList.add('controls-hidden');
+}
+function scheduleHide() {
+  clearTimeout(P.hideTimer);
+  if (P.state !== 'playing') return;
+  P.hideTimer = setTimeout(hideControls, S.autoHide * 1000);
+}
+['pointerdown', 'input'].forEach((ev) => {
+  $('#pControls').addEventListener(ev, () => { clearTimeout(P.hideTimer); scheduleHide(); });
+  $('#pTop').addEventListener(ev, () => { clearTimeout(P.hideTimer); scheduleHide(); });
+});
+
+const ACTIONS = {
+  toggle: togglePlay,
+  start: start,
+  stop: stopAll,
+  restart: restart,
+  back5s: back5s,
+  back1: () => jumpBy(-lines(1)),
+  back3: () => jumpBy(-lines(3)),
+  fwd1: () => jumpBy(lines(1)),
+  nudgeBack: () => jumpBy(-lines(S.nudgeLines)),
+  nudgeFwd: () => jumpBy(lines(S.nudgeLines)),
+  faster: () => { setSpeed(S.speed + S.speedStep); toast(`Скорость ${fmtSpeed(S.speed)}`, { duration: 900 }); },
+  slower: () => { setSpeed(S.speed - S.speedStep); toast(`Скорость ${fmtSpeed(S.speed)}`, { duration: 900 }); },
+  home: () => { jumpTo(0); if (P.state === 'ended') setState('paused'); },
+  end: () => jumpTo(P.maxPos),
+  mirror: () => { setSetting('mirrorH', !S.mirrorH); toast(S.mirrorH ? 'Зеркало по горизонтали: вкл' : 'Зеркало выключено', { duration: 1200 }); },
+  hud: () => setSetting('showHud', !S.showHud),
+  fullscreen: () => toggleFullscreen(),
+  settings: () => (pv.classList.contains('drawer-open') ? closeDrawer() : openDrawer()),
+  exit: () => exitPrompter()
+};
+function runAction(name) {
+  const fn = ACTIONS[name];
+  if (fn) fn();
+}
+pv.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  runAction(b.dataset.act);
+});
+
+/* --- касания по сцене: тап = пауза/продолжить, перетаскивание = ручная прокрутка --- */
+let drag = null;
+stage.addEventListener('pointerdown', (e) => {
+  if (e.button > 0) return;
+  drag = { id: e.pointerId, y: e.clientY, y0: e.clientY, x0: e.clientX, t: now(), moved: false };
+  try { stage.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+});
+stage.addEventListener('pointermove', (e) => {
+  if (!drag || e.pointerId !== drag.id) return;
+  if (!drag.moved && Math.hypot(e.clientY - drag.y0, e.clientX - drag.x0) > 12) { drag.moved = true; P.dragging = true; P.jump = 0; }
+  if (drag.moved) {
+    const dy = e.clientY - drag.y;
+    P.pos = clamp(P.pos - dy * (S.mirrorV ? -1 : 1), 0, P.maxPos);
+    paint();
+  }
+  drag.y = e.clientY;
+});
+function endDrag(e, cancelled) {
+  if (!drag || (e && e.pointerId !== drag.id)) return;
+  const d = drag; drag = null;
+  if (d.moved) {
+    P.dragging = false;
+    if (P.state === 'ended' && P.pos < P.maxPos - 1) setState('paused');
+    afterManualMove();
+    savePosition(true);
+  } else if (!cancelled && now() - d.t < 700) onStageTap();
+}
+stage.addEventListener('pointerup', (e) => endDrag(e, false));
+stage.addEventListener('pointercancel', (e) => endDrag(e, true));
+stage.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  P.pos = clamp(P.pos + e.deltaY * (S.mirrorV ? -1 : 1), 0, P.maxPos);
+  paint();
+  if (P.runtimeVoice === 'follow') VoiceFollow.resync();
+}, { passive: false });
+['gesturestart', 'gesturechange'].forEach((ev) => document.addEventListener(ev, (e) => { if (currentView !== 'script') e.preventDefault(); }, { passive: false }));
+document.addEventListener('dblclick', (e) => { if (currentView !== 'script') e.preventDefault(); }, { passive: false });
+
+function onStageTap() {
+  if (pv.classList.contains('drawer-open')) { closeDrawer(); return; }
+  if (P.state === 'countdown') { pause(); return; }
+  if (S.tapAction === 'controls') {
+    if (pv.classList.contains('controls-hidden')) showControls(); else hideControls();
+    return;
+  }
+  togglePlay();
+  showControls(P.state !== 'playing');
+}
+
+/* --- клавиатура и Bluetooth-пульт --- */
+function keyId(e) {
+  if (e.code && /^(Key[A-Z]|Digit\d)$/.test(e.code)) return e.code;
+  if (e.key === ' ' || e.code === 'Space') return 'Space';
+  return e.key;
+}
+function keyLabel(k) {
+  const map = { Space: 'Пробел', Enter: 'Enter', ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', PageUp: 'PageUp', PageDown: 'PageDown', Escape: 'Esc', Home: 'Home', End: 'End', Backspace: '⌫', Tab: 'Tab' };
+  if (map[k]) return map[k];
+  if (/^Key[A-Z]$/.test(k)) return k.slice(3);
+  if (/^Digit\d$/.test(k)) return k.slice(5);
+  return k;
+}
+let learnAction = null;
+document.addEventListener('keydown', (e) => {
+  if (learnAction) {
+    e.preventDefault(); e.stopPropagation();
+    const k = keyId(e);
+    if (k !== 'Escape' || learnAction === 'exit') {
+      for (const a of Object.keys(S.keymap)) S.keymap[a] = S.keymap[a].filter((x) => x !== k);
+      S.keymap[learnAction].push(k);
+      saveSettings();
+      toast(`«${ACTION_LABELS[learnAction]}» — клавиша ${keyLabel(k)}`);
+    }
+    learnAction = null;
+    renderKeysTable();
+    return;
+  }
+  if (isModalOpen()) { if (e.key === 'Escape') closeModal(null); return; }
+  const tgt = e.target;
+  const typing = tgt && (tgt.tagName === 'TEXTAREA' || (tgt.tagName === 'INPUT' && !['range', 'checkbox', 'button'].includes(tgt.type)) || tgt.isContentEditable);
+  if (currentView === 'script') {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); openPrompter({ fromStart: true, autostart: true }); }
+    return;
+  }
+  if (typing) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = keyId(e);
+  const action = Object.keys(S.keymap).find((a) => S.keymap[a].includes(k));
+  if (!action) return;
+  e.preventDefault();
+  if (tgt && tgt.blur && tgt !== document.body) tgt.blur();
+  if (action === 'exit' && pv.classList.contains('drawer-open')) { closeDrawer(); return; }
+  runAction(action);
+});
+
+/* --- полноэкранный режим, блокировка сна --- */
+function fsElement() { return document.fullscreenElement || document.webkitFullscreenElement; }
+function enterFullscreen() {
+  const el = document.documentElement;
+  try {
+    if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    else toast('Полноэкранный режим недоступен. Добавьте приложение на экран «Домой» — тогда оно откроется без панелей Safari.', { duration: 6000 });
+  } catch (_) { /* ignore */ }
+}
+function exitFullscreen() {
+  if (!fsElement()) return;
+  try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (_) { /* ignore */ }
+}
+function toggleFullscreen() { if (fsElement()) exitFullscreen(); else enterFullscreen(); }
+if (isStandalone()) $('#btnFull').classList.add('hidden');
+
+let wakeLock = null;
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator && document.visibilityState === 'visible') {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener && wakeLock.addEventListener('release', () => { wakeLock = null; });
+    }
+  } catch (e) { /* не критично */ }
+}
+function releaseWakeLock() { try { wakeLock && wakeLock.release(); } catch (_) { /* ignore */ } wakeLock = null; }
+
+/* --- фон / возврат / поворот --- */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    commitEditor.flush();
+    if (currentView !== 'script') {
+      if (P.state === 'playing' || P.state === 'countdown') pause();
+      stopVoice();
+      savePosition(true);
+    }
+    saveSettings.flush();
+  } else if (currentView !== 'script') {
+    requestWakeLock();
+    showControls(true);
+    queueRelayout();
+  }
+});
+window.addEventListener('pagehide', () => {
+  commitEditor.flush();
+  saveSettings.flush();
+  if (currentView !== 'script') savePosition(true);
+  setSession();
+});
+window.addEventListener('resize', () => { if (currentView !== 'script') queueRelayout(); });
+window.addEventListener('orientationchange', () => setTimeout(() => { if (currentView !== 'script') queueRelayout(); }, 250));
+if (window.ResizeObserver) new ResizeObserver(() => { if (currentView !== 'script') queueRelayout(); }).observe(stage);
+
+/* =========================================================================
+   ГОЛОС: Voice Pause (локальный анализ громкости) и Voice Follow (распознавание)
+   ========================================================================= */
+const voiceInd = $('#voiceInd');
+function setVoiceInd(cls, text) {
+  voiceInd.className = 'voice-ind ' + (cls || '');
+  voiceInd.textContent = text || '';
+}
+
+const VoicePause = {
+  active: false, speaking: false, level: -100, lastVoice: 0, stream: null, ctx: null, an: null, buf: null,
+  supported() { return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && (window.AudioContext || window.webkitAudioContext)); },
+  threshold() { return -22 - S.vpSensitivity * 0.5; }, // 0 → −22 дБ (грубо), 100 → −72 дБ (очень чувствительно)
+  async start() {
+    if (this.active) return true;
+    if (!window.isSecureContext) throw new Error('insecure');
+    if (!this.supported()) throw new Error('unsupported');
+    const AC = window.AudioContext || window.webkitAudioContext;
+    // AudioContext создаём синхронно в обработчике жеста (требование Safari)
+    this.ctx = new AC();
+    try { this.ctx.resume(); } catch (_) { /* ignore */ }
+    this.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false } });
+    if (this.ctx.state === 'suspended') { try { await this.ctx.resume(); } catch (_) { /* ignore */ } }
+    const src = this.ctx.createMediaStreamSource(this.stream);
+    this.an = this.ctx.createAnalyser();
+    this.an.fftSize = 1024;
+    src.connect(this.an);
+    this.buf = new Uint8Array(this.an.fftSize);
+    this.active = true; this.speaking = false; this.lastVoice = 0; this.level = -100;
+    return true;
+  },
+  sample(t) {
+    if (!this.active || !this.an) return;
+    this.an.getByteTimeDomainData(this.buf);
+    let sum = 0;
+    for (let i = 0; i < this.buf.length; i++) { const v = (this.buf[i] - 128) / 128; sum += v * v; }
+    const db = 20 * Math.log10(Math.sqrt(sum / this.buf.length) + 1e-6);
+    this.level = db > this.level ? this.level + (db - this.level) * 0.5 : this.level + (db - this.level) * 0.12;
+    if (this.level > this.threshold()) this.lastVoice = t;
+    const was = this.speaking;
+    this.speaking = this.lastVoice > 0 && (t - this.lastVoice) < S.vpDelay * 1000;
+    if (was !== this.speaking && P.runtimeVoice === 'pause') setVoiceInd(this.speaking ? 'speaking' : 'listening', this.speaking ? 'речь' : 'тишина');
+    if (meterUI) meterUI(this.level);
+  },
+  stop() {
+    this.active = false; this.speaking = false;
+    try { this.stream && this.stream.getTracks().forEach((tr) => tr.stop()); } catch (_) { /* ignore */ }
+    try { this.ctx && this.ctx.close(); } catch (_) { /* ignore */ }
+    this.stream = null; this.ctx = null; this.an = null;
+  }
+};
+let meterUI = null;
+
+/* ---- Voice Follow: нечёткое сопоставление распознанной речи со сценарием ---- */
+function lev(a, b, cap) {
+  const la = a.length, lb = b.length;
+  if (Math.abs(la - lb) > cap) return cap + 1;
+  let prev = new Array(lb + 1), cur = new Array(lb + 1);
+  for (let j = 0; j <= lb; j++) prev[j] = j;
+  for (let i = 1; i <= la; i++) {
+    cur[0] = i; let rowMin = cur[0];
+    for (let j = 1; j <= lb; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (cur[j] < rowMin) rowMin = cur[j];
+    }
+    if (rowMin > cap) return cap + 1;
+    [prev, cur] = [cur, prev];
+  }
+  return prev[lb];
+}
+function wordSim(a, b) {
+  if (a === b) return 1;
+  const la = a.length, lb = b.length, m = Math.min(la, lb);
+  if (m <= 2) return 0;
+  let p = 0; while (p < m && a[p] === b[p]) p++;
+  if (m >= 4 && p >= Math.max(3, m - 2)) return 0.85;      // другое окончание: «говорил» / «говорила»
+  if (m === 3 && p === 3 && Math.max(la, lb) <= 5) return 0.7;
+  if (Math.max(la, lb) >= 5) {
+    const d = lev(a, b, 2);
+    if (d <= 1) return 0.8;
+    if (d === 2 && m >= 7) return 0.65;
+  }
+  return 0;
+}
+const wordWeight = (w) => [0, 0.3, 0.45, 0.65, 0.85][w.length] ?? 1;
+
+function tokenizeSpeech(text) {
+  const out = [];
+  WORD_RE.lastIndex = 0;
+  for (const m of text.matchAll(WORD_RE)) out.push(normWord(m[0]));
+  return out;
+}
+
+/** Оценка: насколько хвост речи совпадает со сценарием, если последнее сказанное слово — j */
+function scoreAt(tail, W, j) {
+  let k = j, score = 0, matched = 0, miss = 0;
+  for (let i = tail.length - 1; i >= 0 && k >= 0; i--) {
+    let best = 0, bk = -1;
+    const maxD = i === tail.length - 1 ? 0 : 2;
+    for (let d = 0; d <= maxD && k - d >= 0; d++) {
+      const s = wordSim(tail[i], W[k - d]);
+      if (s > best) { best = s; bk = k - d; }
+    }
+    if (best < 0.6 && i > 0) {
+      // «ёлки палки» ↔ «ёлки-палки»: пробуем склеить два распознанных слова
+      const joined = tail[i - 1] + tail[i];
+      for (let d = 0; d <= maxD && k - d >= 0; d++) {
+        const s2 = wordSim(joined, W[k - d]);
+        if (s2 > best) { best = s2; bk = k - d; }
+      }
+      if (best >= 0.6) i--;
+    }
+    if (best >= 0.6) { score += best * wordWeight(W[bk]) - 0.15 * (k - bk); matched++; k = bk - 1; }
+    else { miss++; score -= 0.1; if (miss > 3) break; }
+  }
+  return { score, matched };
+}
+function matchTail(tail, cursor, allowGlobal) {
+  const W = P.words, n = W.length;
+  if (!n || !tail.length) return null;
+  let best = null;
+  const lo = Math.max(0, cursor - 15), hi = Math.min(n - 1, cursor + 45);
+  for (let j = lo; j <= hi; j++) {
+    const r = scoreAt(tail, W, j);
+    if (!r.matched) continue;
+    const dist = j - cursor;
+    const pen = dist < 0 ? 0.1 * -dist : 0.012 * dist;
+    const f = r.score - pen;
+    if (!best || f > best.f) best = { j, f, m: r.matched, raw: r.score };
+  }
+  if (best) {
+    const forward = best.j >= cursor;
+    if (forward && best.m >= 2 && best.f >= 1.2) return best.j;
+    if (forward && best.m === 1 && best.j <= cursor + 4 && best.raw >= 0.8 && W[best.j].length >= 4) return best.j;
+    if (!forward && best.m >= 3 && best.f >= 1.9) return best.j;
+  }
+  // потеряли место (пропущен большой кусок) — ищем по всему тексту, но строго
+  if (allowGlobal && tail.length >= 4) {
+    let g = null;
+    for (let j = 0; j < n; j++) {
+      if (j >= lo && j <= hi) continue;
+      const r = scoreAt(tail, W, j);
+      if (r.matched >= 4 && r.score >= 3.3 && (!g || r.score > g.raw || (r.score === g.raw && Math.abs(j - cursor) < Math.abs(g.j - cursor)))) g = { j, raw: r.score };
+    }
+    if (g) return g.j;
+  }
+  return null;
+}
+
+const VoiceFollow = {
+  rec: null, wanted: false, paused: false, running: false, everWorked: false,
+  cursor: -1, lastGlobal: 0, restarts: [], heard: '',
+  get SR() { return window.SpeechRecognition || window.webkitSpeechRecognition; },
+  supported() { return !!this.SR; },
+  start() {
+    if (!this.supported()) { this.fail('unsupported'); return false; }
+    this.wanted = true; this.paused = false;
+    this.resync();
+    this._start();
+    return true;
+  },
+  _start() {
+    if (this.running || !this.wanted || this.paused) return;
+    const rec = new this.SR();
+    rec.lang = S.voiceLang;
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.maxAlternatives = 1;
+    rec.onstart = () => { this.running = true; setVoiceInd('listening', 'слушаю'); };
+    rec.onresult = (e) => this.onResult(e);
+    rec.onerror = (e) => this.onError(e);
+    rec.onend = () => {
+      this.running = false;
+      if (this.rec === rec) this.rec = null;
+      if (this.wanted && !this.paused) this.scheduleRestart();
+    };
+    this.rec = rec;
+    try { rec.start(); } catch (e) { console.warn(e); this.running = false; }
+  },
+  scheduleRestart() {
+    const t = Date.now();
+    this.restarts = this.restarts.filter((x) => t - x < 15000);
+    this.restarts.push(t);
+    if (this.restarts.length > 8) { this.fail('unstable'); return; }
+    setTimeout(() => this._start(), 250);
+  },
+  onResult(e) {
+    this.everWorked = true;
+    let txt = '';
+    for (let i = Math.max(0, e.results.length - 4); i < e.results.length; i++) txt += ' ' + e.results[i][0].transcript;
+    const isFinal = e.results[e.results.length - 1].isFinal;
+    const tail = tokenizeSpeech(txt.slice(-300)).slice(-8);
+    this.heard = tail.join(' ');
+    heardEl.textContent = this.heard;
+    if (heardTest) heardTest(this.heard);
+    if (this.paused || P.state !== 'playing' || P.runtimeVoice !== 'follow') return;
+    const t = Date.now();
+    const allowGlobal = isFinal || t - this.lastGlobal > 1200;
+    if (allowGlobal) this.lastGlobal = t;
+    const j = matchTail(tail, this.cursor, allowGlobal);
+    if (j != null) this.setCursor(j);
+    setVoiceInd('speaking', 'следую');
+  },
+  onError(e) {
+    const err = e.error || 'error';
+    console.warn('SpeechRecognition error:', err);
+    if (err === 'no-speech' || err === 'aborted') return; // перезапустится в onend
+    if (err === 'not-allowed' || err === 'service-not-allowed') this.fail(this.everWorked ? 'stopped' : 'denied');
+    else if (err === 'network') this.fail('network');
+    else if (err === 'audio-capture') this.fail('nomic');
+    else if (err === 'language-not-supported') this.fail('lang');
+  },
+  fail(reason) {
+    const msgs = {
+      unsupported: 'Voice Follow недоступен в этом браузере. Включена обычная прокрутка.',
+      denied: 'Voice Follow недоступен: браузер запретил распознавание речи (проверьте доступ к микрофону и Siri/Диктовку). Включена обычная прокрутка.',
+      network: 'Voice Follow: нет связи со службой распознавания речи. Включена обычная прокрутка.',
+      nomic: 'Voice Follow: микрофон недоступен. Включена обычная прокрутка.',
+      lang: 'Voice Follow: язык распознавания не поддерживается. Включена обычная прокрутка.',
+      unstable: 'Voice Follow: распознавание постоянно прерывается в этом браузере. Включена обычная прокрутка.',
+      stopped: 'Распознавание речи остановлено системой. Включена обычная прокрутка.'
+    };
+    this.stop();
+    setVoiceInd('error', 'голос недоступен');
+    if (heardTest) heardTest('— ' + (msgs[reason] || reason));
+    if (P.runtimeVoice === 'follow') {
+      P.runtimeVoice = 'off';
+      applyStyles();
+      toast(msgs[reason] || 'Voice Follow недоступен', { duration: 7000 });
+    }
+    VoiceFollow.lastFailure = reason;
+    P.voiceFallback = true;
+    renderVoiceStatus();
+  },
+  pause() { this.paused = true; try { this.rec && this.rec.abort(); } catch (_) { /* ignore */ } },
+  resume() { if (!this.wanted) return; this.paused = false; this.resync(); this._start(); },
+  stop() {
+    this.wanted = false; this.paused = false;
+    const r = this.rec; this.rec = null;
+    try { r && r.abort(); } catch (_) { /* ignore */ }
+    this.running = false;
+  },
+  resync() {
+    // курсор = слово перед тем, что сейчас стоит на линии чтения
+    const a = anchorIndex(P.pos + P.jump);
+    this.cursor = Math.max(-1, a - 1);
+    this.markSaid(this.cursor);
+  },
+  setCursor(j) {
+    this.cursor = j;
+    this.markSaid(j);
+  },
+  markSaid(j) {
+    const els = P.wordEls;
+    let from = P.saidUpTo ?? -1;
+    if (j > from) for (let i = from + 1; i <= j && i < els.length; i++) els[i].classList.add('said');
+    else for (let i = Math.max(0, j + 1); i <= from && i < els.length; i++) els[i].classList.remove('said');
+    P.saidUpTo = j;
+  },
+  targetPos() {
+    if (this.cursor < 0) return null;
+    return P.tops[Math.min(this.cursor, P.tops.length - 1)];
+  }
+};
+let heardTest = null;
+
+function clearSaid() { P.wordEls.forEach((el) => el.classList.remove('said')); P.saidUpTo = -1; }
+
+/** Включить голосовой режим для текущего сеанса чтения (вызывается по жесту) */
+function startVoice() {
+  if (S.voiceMode === 'off') { P.runtimeVoice = 'off'; setVoiceInd('', ''); applyStyles(); return; }
+  if (S.voiceMode === 'follow') {
+    if (!VoiceFollow.supported()) {
+      P.runtimeVoice = 'off';
+      toast('Voice Follow недоступен в этом браузере. Включена обычная прокрутка.', { duration: 6000 });
+      setVoiceInd('error', 'голос недоступен');
+      applyStyles();
+      return;
+    }
+    if (!window.isSecureContext) {
+      P.runtimeVoice = 'off';
+      toast('Voice Follow работает только по HTTPS (или localhost). Включена обычная прокрутка.', { duration: 6000 });
+      applyStyles();
+      return;
+    }
+    P.runtimeVoice = 'follow';
+    applyStyles();
+    clearSaid();
+    VoiceFollow.start();
+    setVoiceInd('listening', 'слушаю');
+    return;
+  }
+  if (S.voiceMode === 'pause') {
+    if (VoicePause.active) { P.runtimeVoice = 'pause'; return; }
+    P.runtimeVoice = 'pause';
+    setVoiceInd('listening', 'микрофон…');
+    VoicePause.start().then(() => {
+      setVoiceInd('listening', 'тишина');
+    }).catch((e) => {
+      console.warn(e);
+      P.runtimeVoice = 'off';
+      P.voiceFallback = true;
+      const msg = e && e.message === 'insecure'
+        ? 'Voice Pause: микрофон доступен только по HTTPS (или localhost). Включена обычная прокрутка.'
+        : 'Voice Pause: нет доступа к микрофону. Включена обычная прокрутка.';
+      setVoiceInd('error', 'микрофон недоступен');
+      toast(msg, { duration: 6000 });
+    });
+  }
+}
+function stopVoice() {
+  VoiceFollow.stop();
+  if (!meterTestActive) VoicePause.stop();
+  P.runtimeVoice = 'off';
+  setVoiceInd('', '');
+  applyStyles();
+}
+
+/* =========================================================================
+   НАСТРОЙКИ (drawer)
+   ========================================================================= */
+const drawerBody = $('#drawerBody');
+const uiSync = {}; // key → функция обновления контролов
+
+function setSetting(key, val) {
+  S[key] = val;
+  saveSettings();
+  onSettingChanged(key);
+}
+function onSettingChanged(key) {
+  if (key === 'speed') { updateSpeedUI(); return; }
+  if (key === 'wpm') { wpmInput.value = S.wpm; updateStats(); renderLibrary(); }
+  if (key === 'voiceMode') { renderVoiceStatus(); }
+  syncSettingsUI(key);
+  if (currentView !== 'script') { applyStyles(); queueRelayout(); }
+}
+function syncSettingsUI(key) {
+  if (key) { uiSync[key] && uiSync[key](); return; }
+  Object.values(uiSync).forEach((f) => f());
+}
+
+function openDrawer() {
+  pv.classList.add('drawer-open');
+  showControls(true);
+  currentView = 'settings';
+  syncSettingsUI();
+  renderVoiceStatus();
+  renderDataStatus();
+}
+function closeDrawer() {
+  pv.classList.remove('drawer-open');
+  if (currentView === 'settings') currentView = 'prompter';
+  stopMeterTest();
+  stopHeardTest();
+  if (P.state === 'playing') scheduleHide();
+}
+$('#drawerClose').onclick = closeDrawer;
+
+function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+
+function rangeRow({ key, label, min, max, step, fmt }) {
+  const row = el('div', 'set-row');
+  row.innerHTML = `<div class="set-label"><span>${label}</span><output></output></div>
+    <div class="range-wrap"><button class="step" data-d="-1" aria-label="меньше">−</button><input type="range" min="${min}" max="${max}" step="${step}"><button class="step" data-d="1" aria-label="больше">+</button></div>`;
+  const inp = $('input', row), out = $('output', row);
+  const sync = () => { inp.value = S[key]; out.textContent = fmt ? fmt(S[key]) : S[key]; };
+  const set = (v) => {
+    v = clamp(Math.round(v / step) * step, min, max);
+    v = Number(v.toFixed(4));
+    if (key === 'speed') setSpeed(v, true); else setSetting(key, v);
+    sync();
+  };
+  inp.addEventListener('input', () => set(Number(inp.value)));
+  $$('.step', row).forEach((b) => b.addEventListener('click', () => set(Number(S[key]) + Number(b.dataset.d) * step)));
+  uiSync[key] = sync; sync();
+  return row;
+}
+function segRow({ key, label, options }) {
+  const row = el('div', 'set-row');
+  if (label) row.appendChild(el('div', 'set-label', `<span>${label}</span>`));
+  const seg = el('div', 'seg');
+  options.forEach(([v, t]) => {
+    const b = el('button', '', t);
+    b.dataset.v = String(v);
+    b.onclick = () => setSetting(key, typeof DEFAULTS[key] === 'number' ? Number(v) : v);
+    seg.appendChild(b);
+  });
+  row.appendChild(seg);
+  const sync = () => $$('button', seg).forEach((b) => b.classList.toggle('active', b.dataset.v === String(S[key])));
+  uiSync[key] = sync; sync();
+  return row;
+}
+function toggleRow({ key, label }) {
+  const row = el('label', 'toggle-row');
+  row.innerHTML = `<span>${label}</span><span class="switch"><input type="checkbox"><span></span></span>`;
+  const inp = $('input', row);
+  inp.addEventListener('change', () => setSetting(key, inp.checked));
+  uiSync[key] = () => { inp.checked = !!S[key]; };
+  uiSync[key]();
+  return row;
+}
+function section(title) {
+  const s = el('div', 'set-section');
+  s.appendChild(el('h4', '', title));
+  drawerBody.appendChild(s);
+  return s;
+}
+const pct = (v) => Math.round(v) + '%';
+
+function buildDrawer() {
+  drawerBody.innerHTML = '';
+
+  // Пресеты
+  let s = section('Пресеты');
+  const grid = el('div', 'preset-grid');
+  Object.entries(PRESETS).forEach(([id, p]) => {
+    const b = el('button', 'btn', `<b>${p.title}</b><small>${p.desc}</small>`);
+    b.onclick = () => {
+      Object.assign(S, p.values);
+      saveSettings();
+      syncSettingsUI();
+      if (currentView !== 'script') { applyStyles(); queueRelayout(); }
+      toast(`Пресет «${p.title}» применён. Любой параметр можно подправить ниже.`);
+    };
+    grid.appendChild(b);
+  });
+  s.appendChild(grid);
+
+  // Текст
+  s = section('Текст');
+  s.appendChild(rangeRow({ key: 'fontSize', label: 'Размер шрифта', min: 24, max: 160, step: 1, fmt: (v) => v + ' px' }));
+  s.appendChild(rangeRow({ key: 'columnWidth', label: 'Ширина колонки (от длинной стороны экрана)', min: 20, max: 100, step: 1, fmt: pct }));
+  s.appendChild(rangeRow({ key: 'lineHeight', label: 'Межстрочный интервал', min: 1, max: 2.6, step: 0.05, fmt: (v) => v.toFixed(2).replace('.', ',') }));
+  s.appendChild(rangeRow({ key: 'paraSpacing', label: 'Расстояние между абзацами', min: 0, max: 3, step: 0.1, fmt: (v) => v.toFixed(1).replace('.', ',') + ' строки' }));
+  s.appendChild(rangeRow({ key: 'letterSpacing', label: 'Межбуквенный интервал', min: -0.02, max: 0.15, step: 0.005, fmt: (v) => (v * 100).toFixed(1).replace('.', ',') + '%' }));
+  s.appendChild(segRow({ key: 'align', label: 'Выравнивание', options: [['left', 'По левому краю'], ['center', 'По центру']] }));
+  s.appendChild(segRow({ key: 'fontFamily', label: 'Шрифт', options: [['sans', 'Без засечек'], ['serif', 'С засечками'], ['rounded', 'Скруглённый']] }));
+  s.appendChild(segRow({ key: 'fontWeight', label: 'Насыщенность', options: [[400, 'Обычный'], [500, 'Средний'], [600, 'Полужирный'], [700, 'Жирный']] }));
+
+  // Цвет
+  s = section('Цвет и яркость');
+  s.appendChild(segRow({ key: 'theme', label: 'Цветовой режим', options: [['dark', 'Белый на чёрном'], ['gray', 'Серый на чёрном'], ['light', 'Чёрный на белом'], ['amber', 'Жёлтый на чёрном']] }));
+  s.appendChild(rangeRow({ key: 'brightness', label: 'Яркость текста', min: 30, max: 100, step: 1, fmt: pct }));
+  s.appendChild(toggleRow({ key: 'showCues', label: 'Показывать маркеры [ПАУЗА], [УЛЫБКА]…' }));
+
+  // Зона чтения
+  s = section('Зона чтения (Reading Focus Zone)');
+  s.appendChild(toggleRow({ key: 'focusEnabled', label: 'Приглушать строки вне зоны' }));
+  s.appendChild(rangeRow({ key: 'focusY', label: 'Положение зоны (сверху экрана)', min: 8, max: 80, step: 1, fmt: pct }));
+  s.appendChild(rangeRow({ key: 'focusLines', label: 'Ярких строк в зоне', min: 1, max: 8, step: 1, fmt: (v) => v + ' ' + plural(v, 'строка', 'строки', 'строк') }));
+  s.appendChild(rangeRow({ key: 'dimStrength', label: 'Затемнение вне зоны', min: 0, max: 95, step: 1, fmt: pct }));
+  s.appendChild(toggleRow({ key: 'lineMarker', label: 'Стрелки-указатели строки чтения' }));
+  s.appendChild(el('div', 'hint', 'Совет: поставьте зону как можно ближе к объективу камеры. Если iPhone стоит над iPad — зону выше (20–30%).'));
+
+  // Прокрутка
+  s = section('Прокрутка');
+  s.appendChild(rangeRow({ key: 'speed', label: 'Скорость', min: 0, max: 100, step: 0.5, fmt: (v) => `${fmtSpeed(v)} (≈${Math.round(v * WPM_PER_UNIT)} сл/мин)` }));
+  s.appendChild(segRow({ key: 'speedStep', label: 'Шаг кнопок «быстрее/медленнее»', options: [[0.5, '0,5'], [1, '1'], [2, '2'], [5, '5']] }));
+  s.appendChild(segRow({ key: 'countdown', label: 'Обратный отсчёт перед стартом', options: [[0, 'Выкл'], [3, '3 с'], [5, '5 с'], [10, '10 с']] }));
+  s.appendChild(segRow({ key: 'nudgeLines', label: '«Немного назад/вперёд» (← →)', options: [[1, '1 строка'], [2, '2 строки'], [3, '3 строки']] }));
+  s.appendChild(segRow({ key: 'tapAction', label: 'Касание экрана во время чтения', options: [['toggle', 'Пауза / продолжить'], ['controls', 'Только показать панель']] }));
+  s.appendChild(segRow({ key: 'autoHide', label: 'Прятать панель через', options: [[2, '2 с'], [3, '3 с'], [5, '5 с'], [8, '8 с']] }));
+  s.appendChild(rangeRow({ key: 'wpm', label: 'Мой темп речи (для оценки времени)', min: 60, max: 220, step: 5, fmt: (v) => v + ' слов/мин' }));
+  const calib = el('div', 'btn-row');
+  const cb = el('button', 'btn', 'Скорость = мой темп речи');
+  cb.onclick = () => calibrateSpeed();
+  calib.appendChild(cb);
+  s.appendChild(calib);
+  s.appendChild(el('div', 'hint', 'Скорость задаётся в словах в минуту и не меняется при смене шрифта или ширины колонки. Подправляйте кнопками ↑ ↓ или «−/+» прямо во время чтения.'));
+
+  // Зеркало
+  s = section('Зеркало (для стеклянного суфлёра)');
+  s.appendChild(toggleRow({ key: 'mirrorH', label: 'Mirror Horizontal — по горизонтали' }));
+  s.appendChild(toggleRow({ key: 'mirrorV', label: 'Mirror Vertical — по вертикали' }));
+  s.appendChild(el('div', 'hint', 'Для классического суфлёра со стеклом обычно нужен только горизонтальный режим. Кнопки управления не отражаются.'));
+
+  // Экран
+  s = section('Экран');
+  s.appendChild(toggleRow({ key: 'showHud', label: 'Показывать время и процент (в углу)' }));
+  s.appendChild(toggleRow({ key: 'autoFullscreen', label: 'Полный экран при старте (в Safari)' }));
+
+  // Голос
+  s = section('Голос');
+  buildVoiceSection(s);
+
+  // Клавиатура
+  s = section('Клавиатура и Bluetooth-пульт');
+  s.appendChild(el('div', 'hint', 'Любой Bluetooth-пульт, который работает как клавиатура (клавиши-стрелки, PageUp/PageDown, пробел, Enter), подойдёт. Нажмите «Назначить», затем кнопку на пульте.'));
+  s.appendChild(el('div', '', '<table class="keys-table" id="keysTable"></table>'));
+  const kr = el('div', 'btn-row');
+  const kb = el('button', 'btn', 'Сбросить клавиши по умолчанию');
+  kb.onclick = () => { S.keymap = JSON.parse(JSON.stringify(DEFAULT_KEYMAP)); saveSettings(); renderKeysTable(); toast('Клавиши сброшены'); };
+  kr.appendChild(kb); s.appendChild(kr);
+
+  // Данные
+  s = section('Данные, офлайн и сброс');
+  s.appendChild(el('div', '', '<div id="dataStatus" class="hint"></div>'));
+  const dr = el('div', 'btn-row');
+  const b1 = el('button', 'btn', 'Резервная копия всех сценариев');
+  b1.onclick = exportBackup;
+  const b2 = el('button', 'btn', 'Восстановить из копии');
+  b2.onclick = () => $('#backupInput').click();
+  const b3 = el('button', 'btn', 'Сбросить настройки отображения');
+  b3.onclick = async () => {
+    const ok = await modal({ title: 'Сбросить настройки?', html: '<p>Сценарии не пострадают. Будут сброшены шрифт, скорость, зона чтения, зеркало и т. п.</p>', ok: 'Сбросить', danger: true });
+    if (!ok) return;
+    const keep = { keymap: S.keymap, voiceConsent: S.voiceConsent, wpm: S.wpm };
+    S = Object.assign({}, DEFAULTS, keep);
+    saveSettings(); syncSettingsUI(); applyStyles(); queueRelayout(); updateSpeedUI();
+    toast('Настройки сброшены');
+  };
+  dr.append(b1, b2, b3);
+  s.appendChild(dr);
+  const bi = el('input'); bi.type = 'file'; bi.accept = '.json,application/json'; bi.id = 'backupInput'; bi.hidden = true;
+  bi.addEventListener('change', importBackup);
+  s.appendChild(bi);
+  s.appendChild(el('div', 'hint', `Версия ${APP_VERSION}. Сценарии хранятся только в памяти этого браузера и никуда не отправляются.`));
+
+  renderKeysTable();
+}
+
+function buildVoiceSection(s) {
+  if (EMBEDDED) {
+    s.appendChild(el('div', 'hint', 'В версии, открытой по ссылке, браузер не даёт доступ к микрофону, поэтому Voice Pause и Voice Follow здесь выключены. Они работают в версии, установленной по своему HTTPS‑адресу (см. README).'));
+    return;
+  }
+  s.appendChild(segRow({ key: 'voiceMode', label: 'Режим', options: [['off', 'Выключен'], ['pause', 'Voice Pause'], ['follow', 'Voice Follow']] }));
+  // перехват выбора режима — проверка поддержки и согласие на облачную обработку
+  const seg = s.lastChild.querySelector('.seg');
+  $$('button', seg).forEach((b) => {
+    b.onclick = async () => {
+      const v = b.dataset.v;
+      if (v === 'follow') {
+        if (!VoiceFollow.supported()) {
+          await modal({ title: 'Voice Follow недоступен в этом браузере', html: '<p>Этот браузер не поддерживает распознавание речи (Web Speech API). Суфлёр будет работать с обычной регулируемой прокруткой.</p><p>Можно включить <b>Voice Pause</b> — он работает локально и останавливает прокрутку, когда вы молчите.</p>', ok: 'Понятно', cancel: null });
+          return;
+        }
+        if (!S.voiceConsent) {
+          const ok = await modal({
+            title: 'Важно о приватности',
+            html: `<p>Voice Follow использует системное распознавание речи браузера. <b>В Safari на iPad это служба Apple (Siri/Диктовка)</b>, в Chrome — служба Google. Звук вашего голоса <b>может отправляться на серверы</b> Apple или Google для распознавания.</p>
+                   <p>Текст сценария никуда не отправляется — сопоставление происходит на этом устройстве.</p>
+                   <p>Режим экспериментальный: нужен интернет, а в приложении с экрана «Домой» Safari может запретить распознавание. Если не получится — суфлёр сам перейдёт на обычную прокрутку.</p>`,
+            ok: 'Включить Voice Follow'
+          });
+          if (!ok) return;
+          setSetting('voiceConsent', true);
+        }
+      }
+      setSetting('voiceMode', v);
+    };
+  });
+  s.appendChild(el('div', '', '<div id="voiceStatus" class="hint"></div>'));
+
+  const vpBox = el('div', '', '');
+  vpBox.id = 'vpBox';
+  vpBox.appendChild(el('div', 'hint', '<b>Voice Pause</b>: пока вы говорите — текст едет с заданной скоростью; замолчали — плавно останавливается. Звук анализируется только на этом устройстве, ничего не отправляется.'));
+  vpBox.appendChild(rangeRow({ key: 'vpSensitivity', label: 'Чувствительность микрофона', min: 0, max: 100, step: 1, fmt: pct }));
+  vpBox.appendChild(rangeRow({ key: 'vpDelay', label: 'Остановка после тишины', min: 0.3, max: 5, step: 0.1, fmt: (v) => v.toFixed(1).replace('.', ',') + ' с' }));
+  const meter = el('div', 'meter', '<div class="meter-fill"></div><div class="meter-thr"></div>');
+  vpBox.appendChild(meter);
+  const mt = el('div', 'btn-row');
+  const mb = el('button', 'btn', 'Проверить микрофон');
+  mb.id = 'meterBtn';
+  mb.onclick = () => (meterTestActive ? stopMeterTest() : startMeterTest());
+  mt.appendChild(mb);
+  vpBox.appendChild(mt);
+  vpBox.appendChild(el('div', 'hint', 'Говорите обычным голосом: зелёная полоса должна заходить за жёлтую метку, а в тишине — оставаться левее неё.'));
+  s.appendChild(vpBox);
+  const fill = $('.meter-fill', meter), thr = $('.meter-thr', meter);
+  const dbToPct = (db) => clamp((db + 90) / 90 * 100, 0, 100);
+  meterUI = (db) => {
+    fill.style.width = dbToPct(db) + '%';
+    fill.style.background = db > VoicePause.threshold() ? 'var(--ok)' : '#5a5a63';
+  };
+  const syncThr = () => { thr.style.left = dbToPct(VoicePause.threshold()) + '%'; };
+  const prev = uiSync.vpSensitivity;
+  uiSync.vpSensitivity = () => { prev(); syncThr(); };
+  syncThr();
+
+  const vfBox = el('div', '', '');
+  vfBox.id = 'vfBox';
+  vfBox.appendChild(el('div', 'hint', '<b>Voice Follow</b> (экспериментально): суфлёр слушает речь, ищет сказанное в тексте и держит нужную строку в зоне чтения. Замолчали — текст стоит. Не требует дословного чтения: ошибки, пропуски, другие окончания и повторы допустимы. Маркеры [ ] не учитываются.'));
+  vfBox.appendChild(segRow({ key: 'voiceLang', label: 'Язык распознавания', options: [['ru-RU', 'Русский'], ['en-US', 'English'], ['uk-UA', 'Українська']] }));
+  vfBox.appendChild(toggleRow({ key: 'vfHighlight', label: 'Приглушать уже произнесённые слова' }));
+  vfBox.appendChild(toggleRow({ key: 'vfShowHeard', label: 'Показывать распознанный текст внизу экрана' }));
+  const ht = el('div', 'btn-row');
+  const hb = el('button', 'btn', 'Проверить распознавание');
+  hb.id = 'heardBtn';
+  hb.onclick = () => (heardTestActive ? stopHeardTest() : startHeardTest());
+  ht.appendChild(hb);
+  vfBox.appendChild(ht);
+  vfBox.appendChild(el('div', 'heard-box', '<span id="heardBox" class="hint">Нажмите «Проверить распознавание» и скажите пару фраз.</span>'));
+  s.appendChild(vfBox);
+  renderVoiceStatus();
+}
+
+function renderVoiceStatus() {
+  const st = $('#voiceStatus');
+  if (!st) return;
+  const vp = $('#vpBox'), vf = $('#vfBox');
+  vp && vp.classList.toggle('hidden', S.voiceMode !== 'pause');
+  vf && vf.classList.toggle('hidden', S.voiceMode !== 'follow');
+  const lines = [];
+  const sr = VoiceFollow.supported();
+  const mic = VoicePause.supported();
+  if (!window.isSecureContext) lines.push('<span class="err">Страница открыта не по HTTPS — браузер не даст доступ к микрофону. Голосовые режимы работают только по HTTPS или на localhost.</span>');
+  if (S.voiceMode === 'follow') {
+    if (!sr) lines.push('<span class="err">Voice Follow недоступен в этом браузере. Будет обычная прокрутка.</span>');
+    else {
+      lines.push('<span class="good">Браузер сообщает о поддержке распознавания речи.</span> Реальная работа проверяется при запуске — если система откажет, включится обычная прокрутка.');
+      if (isIOS && isStandalone()) lines.push('<span class="warn">Вы запустили приложение с экрана «Домой». В этом режиме iPadOS может запрещать распознавание речи — тогда откройте суфлёр в Safari.</span>');
+    }
+    if (VoiceFollow.lastFailure) lines.push(`<span class="err">Последняя попытка: ошибка (${VoiceFollow.lastFailure}).</span>`);
+  } else if (S.voiceMode === 'pause') {
+    lines.push(mic ? '<span class="good">Микрофон поддерживается.</span> Звук обрабатывается локально.' : '<span class="err">Доступ к микрофону не поддерживается — будет обычная прокрутка.</span>');
+  } else {
+    lines.push('Голосовое управление выключено: текст движется с заданной скоростью.');
+  }
+  st.innerHTML = lines.join('<br>');
+}
+
+let meterTestActive = false;
+let meterRaf = 0;
+async function startMeterTest() {
+  try {
+    await VoicePause.start();
+    meterTestActive = true;
+    $('#meterBtn').textContent = 'Остановить проверку';
+    const loop = (t) => { if (!meterTestActive) return; VoicePause.sample(t); meterRaf = requestAnimationFrame(loop); };
+    if (!P.rafId || P.runtimeVoice !== 'pause') meterRaf = requestAnimationFrame(loop);
+  } catch (e) {
+    toast(e && e.message === 'insecure' ? 'Микрофон доступен только по HTTPS или localhost' : 'Нет доступа к микрофону', { duration: 5000 });
+  }
+}
+function stopMeterTest() {
+  if (!meterTestActive) return;
+  meterTestActive = false;
+  cancelAnimationFrame(meterRaf);
+  if (P.runtimeVoice !== 'pause') VoicePause.stop();
+  const b = $('#meterBtn'); if (b) b.textContent = 'Проверить микрофон';
+}
+let heardTestActive = false;
+function startHeardTest() {
+  const box = $('#heardBox');
+  if (!VoiceFollow.supported()) { box.textContent = 'Voice Follow недоступен в этом браузере.'; return; }
+  if (!window.isSecureContext) { box.textContent = 'Нужен HTTPS или localhost.'; return; }
+  heardTestActive = true;
+  $('#heardBtn').textContent = 'Остановить проверку';
+  box.textContent = 'Слушаю… говорите.';
+  heardTest = (t) => { box.textContent = t || '…'; };
+  VoiceFollow.lastFailure = null;
+  VoiceFollow.start();
+}
+function stopHeardTest() {
+  if (!heardTestActive) return;
+  heardTestActive = false;
+  heardTest = null;
+  if (P.runtimeVoice !== 'follow') VoiceFollow.stop();
+  const b = $('#heardBtn'); if (b) b.textContent = 'Проверить распознавание';
+}
+
+function renderKeysTable() {
+  const t = $('#keysTable');
+  if (!t) return;
+  t.innerHTML = Object.keys(DEFAULT_KEYMAP).map((a) => {
+    const keys = (S.keymap[a] || []).map((k) => `<span class="kbd">${escapeHtml(keyLabel(k))}</span>`).join('') || '<span class="hint">—</span>';
+    return `<tr><td>${ACTION_LABELS[a]}<br>${keys}</td><td><button class="btn ${learnAction === a ? 'listening' : ''}" data-learn="${a}">${learnAction === a ? 'Нажмите клавишу…' : 'Назначить'}</button>${S.keymap[a] && S.keymap[a].length ? ` <button class="btn" data-clear="${a}">✕</button>` : ''}</td></tr>`;
+  }).join('');
+  $$('[data-learn]', t).forEach((b) => b.onclick = () => { learnAction = b.dataset.learn; renderKeysTable(); });
+  $$('[data-clear]', t).forEach((b) => b.onclick = () => { S.keymap[b.dataset.clear] = []; saveSettings(); renderKeysTable(); });
+}
+
+function calibrateSpeed() {
+  setSpeed(S.wpm / WPM_PER_UNIT, true);
+  toast(`Скорость ${fmtSpeed(S.speed)} ≈ ${S.wpm} слов/мин`);
+}
+
+async function renderDataStatus() {
+  const d = $('#dataStatus');
+  if (!d) return;
+  const parts = [];
+  if (EMBEDDED) parts.push('<span class="warn">Эта версия открыта по ссылке: нужен интернет для открытия страницы. Сценарии хранятся в памяти этого браузера — делайте резервные копии.</span>');
+  else if (!('serviceWorker' in navigator)) parts.push('<span class="warn">Офлайн-режим: этот браузер не поддерживает service worker.</span>');
+  else if (!window.isSecureContext) parts.push('<span class="warn">Офлайн-режим недоступен: страница открыта не по HTTPS. Для работы без интернета откройте суфлёр по адресу https://… (см. README).</span>');
+  else {
+    try {
+      const has = window.caches && (await caches.keys()).some((k) => k.startsWith('suffler-'));
+      parts.push(has ? '<span class="good">Офлайн-режим готов: приложение сохранено на устройстве.</span>' : '<span class="warn">Офлайн-кэш ещё загружается… Обновите страницу один раз при наличии интернета.</span>');
+    } catch (_) { parts.push('Офлайн-режим: статус неизвестен.'); }
+  }
+  try {
+    if (navigator.storage && navigator.storage.persisted) {
+      const p = await navigator.storage.persisted();
+      parts.push(p ? 'Хранилище защищено от автоочистки.' : (isStandalone() ? 'Приложение установлено на экран «Домой».' : '<span class="warn">Совет: Safari может очистить данные сайта, если не открывать его 7 дней. Установите приложение на экран «Домой» и делайте резервные копии.</span>'));
+    }
+  } catch (_) { /* ignore */ }
+  d.innerHTML = parts.join('<br>');
+}
+
+function exportBackup() {
+  commitEditor.flush();
+  const data = { app: 'suffler', version: APP_VERSION, exported: new Date().toISOString(), scripts, positions, settings: S };
+  const d = new Date();
+  const stamp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  shareOrDownload(JSON.stringify(data, null, 1), `suffler-backup-${stamp}.json`, 'application/json');
+}
+async function importBackup(e) {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    if (!data || !Array.isArray(data.scripts)) throw new Error('bad');
+    const ok = await modal({ title: 'Восстановить из копии?', html: `<p>В копии ${data.scripts.length} ${plural(data.scripts.length, 'сценарий', 'сценария', 'сценариев')}. Они будут добавлены к текущим (существующие с тем же ID обновятся).</p>`, ok: 'Восстановить' });
+    if (!ok) return;
+    let added = 0;
+    for (const sc of data.scripts) {
+      if (!sc || typeof sc.text !== 'string') continue;
+      const item = { id: String(sc.id || uid()), name: String(sc.name || 'Без названия'), text: sc.text, autoName: !!sc.autoName, created: sc.created || Date.now(), updated: sc.updated || Date.now() };
+      const i = scripts.findIndex((x) => x.id === item.id);
+      if (i >= 0) scripts[i] = item; else { scripts.push(item); added++; }
+    }
+    if (data.positions && typeof data.positions === 'object') Object.assign(positions, data.positions);
+    saveScripts(); savePositions(); renderLibrary();
+    toast(`Восстановлено. Новых сценариев: ${added}`);
+  } catch (err) {
+    console.error(err);
+    toast('Файл не похож на резервную копию Суфлёра');
+  }
+}
+
+/* =========================================================================
+   PWA
+   ========================================================================= */
+function registerSW() {
+  if (EMBEDDED || !('serviceWorker' in navigator) || !window.isSecureContext || location.protocol === 'file:') return;
+  navigator.serviceWorker.register('service-worker.js').catch((e) => console.warn('SW registration failed', e));
+}
+
+/* =========================================================================
+   ЗАПУСК
+   ========================================================================= */
+function init() {
+  if (EMBEDDED) {
+    S.voiceMode = 'off';
+    $('#btnPaste').classList.add('hidden');
+  }
+  fillIcons();
+  buildDrawer();
+  loadEditor();
+  setSaveState('saved');
+  updateSpeedUI();
+  setState('idle');
+  registerSW();
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  // восстановление после случайного закрытия
+  const sess = Store.get(KEYS.session, null);
+  if (sess && (sess.view === 'prompter' || sess.view === 'settings') && scripts.find((s) => s.id === sess.id)) {
+    currentId = sess.id;
+    openPrompter({ fromStart: false, autostart: false });
+  }
+  // для отладки/тестов
+  window.__suffler = { P, S: () => S, scripts: () => scripts, positions: () => positions, matchTail, tokenizeSpeech, VoiceFollow, VoicePause };
+}
+init();
+
+})();
+
+</script>
