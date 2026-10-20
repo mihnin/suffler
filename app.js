@@ -949,7 +949,7 @@ function tick(dt, t) {
       if (P.runtimeVoice === 'pause') {
         const gate = VoicePause.speaking ? 1 : 0;
         target *= gate;
-        tau = gate ? 0.35 : 0.6; // плавный разгон и плавная остановка
+        tau = gate ? 0.35 : 0.18; // плавный разгон и плавная остановка
       }
     }
   }
@@ -1218,7 +1218,14 @@ function setVoiceInd(cls, text) {
 const VoicePause = {
   active: false, speaking: false, level: -100, lastVoice: 0, stream: null, ctx: null, an: null, buf: null,
   supported() { return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && (window.AudioContext || window.webkitAudioContext)); },
-  threshold() { return -22 - S.vpSensitivity * 0.5; }, // 0 → −22 дБ (грубо), 100 → −72 дБ (очень чувствительно)
+  noiseFloor: null, calibratingUntil: 0, noiseSamples: [],
+  threshold() { return this.noiseFloor == null ? -22 - S.vpSensitivity * 0.5 : Math.max(-85, this.noiseFloor + 5 + (100 - S.vpSensitivity) * 0.2); },
+  calibrate() {
+    this.noiseFloor = null; this.noiseSamples = [];
+    this.calibratingUntil = performance.now() + 2000;
+    this.speaking = false; this.lastVoice = 0;
+    setVoiceInd('listening', 'калибровка: молчите 2 с');
+  }, // 0 → −22 дБ (грубо), 100 → −72 дБ (очень чувствительно)
   async start() {
     if (this.active) return true;
     if (!window.isSecureContext) throw new Error('insecure');
@@ -1233,18 +1240,27 @@ const VoicePause = {
     this.an = this.ctx.createAnalyser();
     this.an.fftSize = 1024;
     src.connect(this.an);
-    this.buf = new Uint8Array(this.an.fftSize);
+    this.buf = new Float32Array(this.an.fftSize);
     this.active = true; this.speaking = false; this.lastVoice = 0; this.level = -100;
+    this.calibrate();
     return true;
   },
   sample(t) {
     if (!this.active || !this.an) return;
-    this.an.getByteTimeDomainData(this.buf);
+    this.an.getFloatTimeDomainData(this.buf);
     let sum = 0;
-    for (let i = 0; i < this.buf.length; i++) { const v = (this.buf[i] - 128) / 128; sum += v * v; }
+    for (let i = 0; i < this.buf.length; i++) { const v = this.buf[i]; sum += v * v; }
     const db = 20 * Math.log10(Math.sqrt(sum / this.buf.length) + 1e-6);
     this.level = db > this.level ? this.level + (db - this.level) * 0.5 : this.level + (db - this.level) * 0.12;
-    if (this.level > this.threshold()) this.lastVoice = t;
+    if (this.calibratingUntil) {
+      this.noiseSamples.push(db);
+      if (t < this.calibratingUntil) { if (meterUI) meterUI(this.level); return; }
+      this.noiseSamples.sort((a, b) => a - b);
+      this.noiseFloor = this.noiseSamples[Math.floor(this.noiseSamples.length * 0.8)];
+      this.calibratingUntil = 0;
+      setVoiceInd('listening', 'тишина');
+    }
+    if (db > this.threshold()) this.lastVoice = t;
     const was = this.speaking;
     this.speaking = this.lastVoice > 0 && (t - this.lastVoice) < S.vpDelay * 1000;
     if (was !== this.speaking && P.runtimeVoice === 'pause') setVoiceInd(this.speaking ? 'speaking' : 'listening', this.speaking ? 'речь' : 'тишина');
@@ -1503,7 +1519,7 @@ function startVoice() {
     P.runtimeVoice = 'pause';
     setVoiceInd('listening', 'микрофон…');
     VoicePause.start().then(() => {
-      setVoiceInd('listening', 'тишина');
+      setVoiceInd('listening', 'калибровка: молчите 2 с');
     }).catch((e) => {
       console.warn(e);
       P.runtimeVoice = 'off';
@@ -1538,7 +1554,11 @@ function setSetting(key, val) {
 function onSettingChanged(key) {
   if (key === 'speed') { updateSpeedUI(); return; }
   if (key === 'wpm') { wpmInput.value = S.wpm; updateStats(); renderLibrary(); }
-  if (key === 'voiceMode') { renderVoiceStatus(); }
+  if (key === 'voiceMode') {
+    stopMeterTest(); stopVoice(); P.voiceFallback = false;
+    if (currentView !== 'script') startVoice();
+    renderVoiceStatus();
+  }
   syncSettingsUI(key);
   if (currentView !== 'script') { applyStyles(); queueRelayout(); }
 }
@@ -1772,12 +1792,19 @@ function buildVoiceSection(s) {
   mb.id = 'meterBtn';
   mb.onclick = () => (meterTestActive ? stopMeterTest() : startMeterTest());
   mt.appendChild(mb);
+  const cb = el('button', 'btn', 'Калибровать тишину (2 с)');
+  cb.onclick = async () => {
+    if (!VoicePause.active) await startMeterTest();
+    if (VoicePause.active) { VoicePause.calibrate(); toast('Не говорите 2 секунды: измеряем фоновый шум'); }
+  };
+  mt.appendChild(cb);
   vpBox.appendChild(mt);
-  vpBox.appendChild(el('div', 'hint', 'Говорите обычным голосом: зелёная полоса должна заходить за жёлтую метку, а в тишине — оставаться левее неё.'));
+  vpBox.appendChild(el('div', 'hint', 'При включении молчите 2 секунды для калибровки фонового шума. Затем говорите обычным голосом: зелёная полоса должна заходить за жёлтую метку, а в тишине — оставаться левее неё.'));
   s.appendChild(vpBox);
   const fill = $('.meter-fill', meter), thr = $('.meter-thr', meter);
   const dbToPct = (db) => clamp((db + 90) / 90 * 100, 0, 100);
   meterUI = (db) => {
+    thr.style.left = dbToPct(VoicePause.threshold()) + '%';
     fill.style.width = dbToPct(db) + '%';
     fill.style.background = db > VoicePause.threshold() ? 'var(--ok)' : '#5a5a63';
   };
